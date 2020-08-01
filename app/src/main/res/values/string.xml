@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="subscription_key" translatable="false">23217359959645caa965c459892d5a47</string>
+    <string name="endpoint" translatable="false">https://westus.api.cognitive.microsoft.com/face/v1.0/</string>
+</resources>

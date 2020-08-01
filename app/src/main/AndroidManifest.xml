@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="us.koller.cameraroll">
 
+    <uses-permission android:name="android.permission.INTERNET" />
     <!--to read & write images ...-->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
