@@ -40,7 +40,7 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
     public AlbumItem albumItem;
     private boolean selected = false;
     private Drawable selectorOverlay;
-    private String sub_key = R.string.subscription_key;
+    private String sub_key = String.valueOf(R.string.subscription_key);
     private String endpoint = String.valueOf(R.string.endpoint);
     private FaceServiceClient faceServiceClient = new FaceServiceRestClient(endpoint, sub_key);
     //todo Endpoint랑 subscription key ignore하기
