@@ -1,7 +1,6 @@
 package us.koller.cameraroll.adapter.album.viewHolder;
 
 import android.app.Activity;
-import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
@@ -21,28 +20,22 @@ import com.bumptech.glide.request.target.Target;
 import com.bumptech.glide.request.transition.Transition;
 import com.microsoft.projectoxford.face.FaceServiceClient;
 import com.microsoft.projectoxford.face.FaceServiceRestClient;
-
-import us.koller.cameraroll.R;
-import us.koller.cameraroll.data.models.AlbumItem;
-import us.koller.cameraroll.ui.AlbumActivity;
-import us.koller.cameraroll.ui.FileOperationDialogActivity;
-import us.koller.cameraroll.ui.MainActivity;
-import us.koller.cameraroll.ui.PersonGroupActivity;
-import us.koller.cameraroll.util.Util;
-import us.koller.cameraroll.util.animators.ColorFade;
-
-import com.microsoft.projectoxford.face.*;
-import com.microsoft.projectoxford.face.contract.*;
-import com.microsoft.projectoxford.face.rest.ClientException;
+import com.microsoft.projectoxford.face.contract.Face;
+import com.microsoft.projectoxford.face.contract.Person;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.Locale;
 
+import us.koller.cameraroll.R;
+import us.koller.cameraroll.data.models.AlbumItem;
+import us.koller.cameraroll.util.Util;
+import us.koller.cameraroll.util.animators.ColorFade;
+
 public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
 
+    String mPersonGroupId;
     Activity a;
     String path;
     public AlbumItem albumItem;
@@ -51,6 +44,7 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
     private String sub_key = String.valueOf(R.string.subscription_key);
     private String endpoint = String.valueOf(R.string.endpoint);
     private FaceServiceClient faceServiceClient = new FaceServiceRestClient("https://westus.api.cognitive.microsoft.com/face/v1.0/", "23217359959645caa965c459892d5a47");
+
     //todo Endpoint랑 subscription key ignore하기
     AlbumItemHolder(View itemView) {
         super(itemView);
@@ -61,11 +55,11 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
         return albumItem;
     }
 
-    public void setAlbumItem(AlbumItem albumItem) {
+    public void setAlbumItem(AlbumItem albumItem, String PersonGroupId) {
         if (this.albumItem == albumItem) {
             return;
         }
-
+        mPersonGroupId = PersonGroupId;
         this.albumItem = albumItem;
         ImageView imageView = itemView.findViewById(R.id.image);
         loadImage(imageView, albumItem);
@@ -127,6 +121,7 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
                     public void onResourceReady(Bitmap resource, Transition<? super Bitmap> transition) {
                         imageView.setImageBitmap(resource);
 //                        detect(resource.copy(resource.getConfig(), false));
+                        getPersonList(mPersonGroupId);
                     }
                 });
             }
@@ -187,6 +182,10 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
 
     }
 
+    private void getPersonList(String mPersonGroupId){
+        new getPersonListTask().execute(mPersonGroupId);
+    }
+
     private class detectTask extends AsyncTask<InputStream,String,Face[]> {
 
         @Override
@@ -234,6 +233,33 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
         }
     }
 
+    private class getPersonListTask extends AsyncTask<String,String,Person[]> {
+
+        @Override
+        protected Person[] doInBackground(String... params) {
+
+            try {
+                Person[] result = faceServiceClient.listPersonsInLargePersonGroup(params[0]);
+                if (result == null)
+                {
+                    //todo create person
+                    return null;
+                }
+                return result;
+            } catch (Exception e) {
+                publishProgress("get PersonList failed");
+                return null;
+            }
+        }
+
+        @Override
+        protected void onPostExecute(Person[] personList) {
+            if (personList == null) {
+                return;
+            }
+            //todo verify
+        }
+    }
 
 
 

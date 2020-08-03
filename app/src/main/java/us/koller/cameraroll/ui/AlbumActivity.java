@@ -50,27 +50,27 @@ import java.util.List;
 import java.util.Map;
 
 import us.koller.cameraroll.R;
-import us.koller.cameraroll.data.fileOperations.Move;
-import us.koller.cameraroll.data.models.VirtualAlbum;
-import us.koller.cameraroll.themes.Theme;
 import us.koller.cameraroll.adapter.SelectorModeManager;
 import us.koller.cameraroll.adapter.album.AlbumAdapter;
+import us.koller.cameraroll.data.Settings;
+import us.koller.cameraroll.data.fileOperations.FileOperation;
+import us.koller.cameraroll.data.fileOperations.Move;
+import us.koller.cameraroll.data.fileOperations.Rename;
 import us.koller.cameraroll.data.models.Album;
 import us.koller.cameraroll.data.models.AlbumItem;
-import us.koller.cameraroll.data.fileOperations.FileOperation;
-import us.koller.cameraroll.data.fileOperations.Rename;
 import us.koller.cameraroll.data.models.File_POJO;
+import us.koller.cameraroll.data.models.VirtualAlbum;
 import us.koller.cameraroll.data.provider.MediaProvider;
 import us.koller.cameraroll.data.provider.Provider;
-import us.koller.cameraroll.data.Settings;
+import us.koller.cameraroll.themes.Theme;
 import us.koller.cameraroll.ui.widget.FastScrollerRecyclerView;
 import us.koller.cameraroll.ui.widget.GridMarginDecoration;
 import us.koller.cameraroll.ui.widget.SwipeBackCoordinatorLayout;
+import us.koller.cameraroll.util.MediaType;
 import us.koller.cameraroll.util.SortUtil;
 import us.koller.cameraroll.util.StorageUtil;
-import us.koller.cameraroll.util.animators.ColorFade;
-import us.koller.cameraroll.util.MediaType;
 import us.koller.cameraroll.util.Util;
+import us.koller.cameraroll.util.animators.ColorFade;
 
 public class AlbumActivity extends ThemeableActivity
         implements SwipeBackCoordinatorLayout.OnSwipeListener, SelectorModeManager.Callback {
@@ -130,10 +130,16 @@ public class AlbumActivity extends ThemeableActivity
     private boolean pick_photos;
     private boolean allowMultiple;
 
+    private String mPersonGroupId;
+    private int PersonGroupCode = 13;
+
     @Override
     protected void onCreate(@Nullable final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_album);
+
+        Intent intent = new Intent(getApplicationContext() , PersonGroupActivity.class);
+        ActivityCompat.startActivityForResult(this, intent, PersonGroupCode, null);
 
         pick_photos = getIntent().getAction() != null
                 && getIntent().getAction().equals(MainActivity.PICK_PHOTOS);
@@ -206,14 +212,11 @@ public class AlbumActivity extends ThemeableActivity
             }
         });
         //Init PersonGroup
-        Intent intent = new Intent(getApplicationContext() , PersonGroupActivity.class);
-        ActivityCompat.startActivity(getApplicationContext(), intent, null);
-
         recyclerView = findViewById(R.id.recyclerView);
         final int columnCount = Settings.getInstance(this).getColumnCount(this);
         GridLayoutManager gridLayoutManager = new GridLayoutManager(this, columnCount);
         recyclerView.setLayoutManager(gridLayoutManager);
-        recyclerViewAdapter = new AlbumAdapter(this, recyclerView, album, pick_photos);
+        recyclerViewAdapter = new AlbumAdapter(this, recyclerView, album, pick_photos, mPersonGroupId);
         recyclerView.setAdapter(recyclerViewAdapter);
         float albumGridSpacing = getResources().getDimension(R.dimen.album_grid_spacing);
         ((FastScrollerRecyclerView) recyclerView).addOuterGridSpacing((int) (albumGridSpacing / 2));
@@ -622,12 +625,20 @@ public class AlbumActivity extends ThemeableActivity
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        switch (resultCode) {
-            default:
-                if (data != null && data.getAction() != null) {
-                    onNewIntent(data);
-                }
-                break;
+        if (requestCode == PersonGroupCode) {
+            if (resultCode == RESULT_OK){
+                mPersonGroupId = data.getStringExtra("result");
+                recyclerViewAdapter.setPersonGroupId(mPersonGroupId);
+            }
+        }
+        else{
+            switch (resultCode) {
+                default:
+                    if (data != null && data.getAction() != null) {
+                        onNewIntent(data);
+                    }
+                    break;
+            }
         }
     }
 

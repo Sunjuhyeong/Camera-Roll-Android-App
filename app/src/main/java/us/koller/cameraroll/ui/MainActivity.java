@@ -64,11 +64,13 @@ public class MainActivity extends ThemeableActivity {
     public static final String PICK_PHOTOS = "PICK_PHOTOS";
     public static final String RESORT = "RESORT";
 
+    public static final int PersonGroupCode = 13;
     public static final int PICK_PHOTOS_REQUEST_CODE = 6;
     public static final int REFRESH_PHOTOS_REQUEST_CODE = 7;
     public static final int REMOVABLE_STORAGE_PERMISSION_REQUEST_CODE = 8;
     public static final int SETTINGS_REQUEST_CODE = 9;
 
+    private String mPersonGroupId;
     //needed for sharedElement-Transition in Nested RecyclerView Style
     private NestedRecyclerViewAlbumHolder sharedElementViewHolder;
     private final SharedElementCallback mCallback
@@ -698,6 +700,8 @@ public class MainActivity extends ThemeableActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         switch (requestCode) {
+            case PersonGroupCode:
+                mPersonGroupId = data.getStringExtra("result");
             case PICK_PHOTOS_REQUEST_CODE:
                 if (resultCode != RESULT_CANCELED) {
                     setResult(RESULT_OK, data);

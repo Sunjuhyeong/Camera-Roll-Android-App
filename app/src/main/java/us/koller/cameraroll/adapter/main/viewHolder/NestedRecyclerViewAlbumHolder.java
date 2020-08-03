@@ -37,6 +37,7 @@ import us.koller.cameraroll.data.models.File_POJO;
 import us.koller.cameraroll.data.Settings;
 import us.koller.cameraroll.ui.AlbumActivity;
 import us.koller.cameraroll.ui.FileOperationDialogActivity;
+import us.koller.cameraroll.ui.PersonGroupActivity;
 import us.koller.cameraroll.ui.widget.EqualSpacesItemDecoration;
 import us.koller.cameraroll.util.MediaType;
 import us.koller.cameraroll.util.StorageUtil;
@@ -45,9 +46,11 @@ import us.koller.cameraroll.util.animators.ColorFade;
 
 public class NestedRecyclerViewAlbumHolder extends AlbumHolder
         implements Toolbar.OnMenuItemClickListener {
+    //todo mpersonGroupId 받기
 
     @SuppressWarnings("FieldCanBeLocal")
     private static int SINGLE_LINE_MAX_ITEM_COUNT = 4;
+    private static int PersonGroupCode = 13;
 
     private Theme theme;
 
@@ -58,7 +61,7 @@ public class NestedRecyclerViewAlbumHolder extends AlbumHolder
     private EqualSpacesItemDecoration itemDecoration;
 
     private SelectorModeManager manager;
-
+    private String mPersonGroupId;
 
     private SelectorModeManager.OnBackPressedCallback onBackPressedCallback
             = new SelectorModeManager.OnBackPressedCallback() {
@@ -228,6 +231,14 @@ public class NestedRecyclerViewAlbumHolder extends AlbumHolder
             return;
         }
 
+        Activity a;
+        if (getContext() instanceof Activity) {
+            a = ((Activity) getContext());
+            Intent intent;
+        } else {
+            Toast.makeText(getContext(), "Error", Toast.LENGTH_SHORT).show();
+        }
+
         int oldHeight = nestedRecyclerView.getHeight();
         //make RecyclerView either single ore double lined, depending on the album size
         int lineCount = album.getAlbumItems().size() > SINGLE_LINE_MAX_ITEM_COUNT ? 2 : 1;
@@ -257,7 +268,7 @@ public class NestedRecyclerViewAlbumHolder extends AlbumHolder
             adapter.setData(album);
         } else {
             NestedAdapter adapter = new NestedAdapter(callback,
-                    nestedRecyclerView, album, false);
+                    nestedRecyclerView, album, false, mPersonGroupId);
             adapter.setSelectorModeManager(manager);
             nestedRecyclerView.setAdapter(adapter);
         }
@@ -307,6 +318,9 @@ public class NestedRecyclerViewAlbumHolder extends AlbumHolder
             return false;
         }
         Intent intent;
+        intent = new Intent(getContext(), PersonGroupActivity.class);
+        a.startActivityForResult(intent, PersonGroupCode);
+
         switch (item.getItemId()) {
             case R.id.share:
                 //share multiple items
@@ -395,8 +409,8 @@ public class NestedRecyclerViewAlbumHolder extends AlbumHolder
     private static class NestedAdapter extends AlbumAdapter {
 
         NestedAdapter(SelectorModeManager.Callback callback, final RecyclerView recyclerView,
-                      Album album, boolean pick_photos) {
-            super(callback, recyclerView, album, pick_photos);
+                      Album album, boolean pick_photos, String mPersonGroupId) {
+            super(callback, recyclerView, album, pick_photos, mPersonGroupId);
         }
 
         @Override

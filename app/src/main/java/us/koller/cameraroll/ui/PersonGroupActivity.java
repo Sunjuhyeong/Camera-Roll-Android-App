@@ -33,7 +33,7 @@ public class PersonGroupActivity extends AppCompatActivity {
     private FaceServiceClient faceServiceClient = new FaceServiceRestClient("https://westus.api.cognitive.microsoft.com/face/v1.0/", "23217359959645caa965c459892d5a47");
     private UUID mFaceId;
     private UUID mPersonId;
-    private String mPersonGroupId = null;
+    String mPersonGroupId = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,11 +43,10 @@ public class PersonGroupActivity extends AppCompatActivity {
         faceServiceClient = new FaceServiceRestClient("https://westus.api.cognitive.microsoft.com/face/v1.0/", "23217359959645caa965c459892d5a47");
 
         new InitPersonGroupTask().execute();
-        finish();
 
-
-        String path = getIntent().getStringExtra("path");
-        getImage(path);
+//
+//        String path = getIntent().getStringExtra("path");
+//        getImage(path);
     }
 
     private void getImage(String path){
@@ -68,7 +67,6 @@ public class PersonGroupActivity extends AppCompatActivity {
         imageBitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
         ByteArrayInputStream inputStream = new ByteArrayInputStream(outputStream.toByteArray());
         new detectTask().execute(inputStream);
-        finish();
     }
 
     private void verify(UUID faceId){
@@ -194,20 +192,22 @@ public class PersonGroupActivity extends AppCompatActivity {
         protected void onPostExecute(LargePersonGroup[] result) {
             if (result != null) {
                 mPersonGroupId = result[0].largePersonGroupId;
-                Toast.makeText(getApplicationContext(), mPersonGroupId, Toast.LENGTH_SHORT).show();
             }
-            else {
+            else {//todo 이게 실제로 작동하지는 않는듯
                 try {
                     faceServiceClient.createLargePersonGroup(
-                        "madcamp3", //group Id todo group ID가 아닌 거 같다
+                        "madcamp3", //group Id
                         "People", //group Name
                         null); //group description
-                    Toast.makeText(getApplicationContext(), mPersonGroupId, Toast.LENGTH_SHORT).show();
                 }
                 catch (Exception e) {
                     publishProgress(e.getMessage());
                 }
             }
+            Intent intent = new Intent();
+            intent.putExtra("result", mPersonGroupId);
+            setResult(RESULT_OK, intent);
+            finish();
         }
     }
 

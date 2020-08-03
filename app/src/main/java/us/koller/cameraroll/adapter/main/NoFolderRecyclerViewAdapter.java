@@ -1,6 +1,9 @@
 package us.koller.cameraroll.adapter.main;
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.widget.RecyclerView;
 import android.view.ViewGroup;
 
@@ -12,6 +15,7 @@ import us.koller.cameraroll.adapter.album.AlbumAdapter;
 import us.koller.cameraroll.data.Settings;
 import us.koller.cameraroll.data.models.Album;
 import us.koller.cameraroll.data.provider.MediaProvider;
+import us.koller.cameraroll.ui.PersonGroupActivity;
 import us.koller.cameraroll.util.SortUtil;
 
 public class NoFolderRecyclerViewAdapter extends AbstractRecyclerViewAdapter<ArrayList<Album>>
@@ -19,19 +23,25 @@ public class NoFolderRecyclerViewAdapter extends AbstractRecyclerViewAdapter<Arr
 
     private Context context;
 
+    private String mPersonGroupId;
     private AlbumAdapter albumAdapter;
     private SelectorModeManager.Callback callback;
+    int PersonGroupCode = 13;
 
     public NoFolderRecyclerViewAdapter(SelectorModeManager.Callback callback, RecyclerView recyclerView, boolean pick_photos) {
         super(pick_photos);
         context = recyclerView.getContext();
+
+//        Intent intent = new Intent(context, PersonGroupActivity.class);
+//        ActivityCompat.startActivityForResult((Activity) context, intent, PersonGroupCode,null);
+
         recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
                 super.onScrollStateChanged(recyclerView, newState);
             }
         });
-        albumAdapter = new AlbumAdapter(this, recyclerView, new Album(), pick_photos);
+        albumAdapter = new AlbumAdapter(this, recyclerView, new Album(), pick_photos, mPersonGroupId);
         this.callback = callback;
     }
 
