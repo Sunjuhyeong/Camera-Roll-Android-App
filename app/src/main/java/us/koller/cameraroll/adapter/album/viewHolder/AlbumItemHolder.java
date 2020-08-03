@@ -1,5 +1,7 @@
 package us.koller.cameraroll.adapter.album.viewHolder;
 
+import android.app.Activity;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
@@ -22,6 +24,10 @@ import com.microsoft.projectoxford.face.FaceServiceRestClient;
 
 import us.koller.cameraroll.R;
 import us.koller.cameraroll.data.models.AlbumItem;
+import us.koller.cameraroll.ui.AlbumActivity;
+import us.koller.cameraroll.ui.FileOperationDialogActivity;
+import us.koller.cameraroll.ui.MainActivity;
+import us.koller.cameraroll.ui.PersonGroupActivity;
 import us.koller.cameraroll.util.Util;
 import us.koller.cameraroll.util.animators.ColorFade;
 
@@ -37,12 +43,14 @@ import java.util.Locale;
 
 public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
 
+    Activity a;
+    String path;
     public AlbumItem albumItem;
     private boolean selected = false;
     private Drawable selectorOverlay;
     private String sub_key = String.valueOf(R.string.subscription_key);
     private String endpoint = String.valueOf(R.string.endpoint);
-    private FaceServiceClient faceServiceClient = new FaceServiceRestClient(endpoint, sub_key);
+    private FaceServiceClient faceServiceClient = new FaceServiceRestClient("https://westus.api.cognitive.microsoft.com/face/v1.0/", "23217359959645caa965c459892d5a47");
     //todo Endpoint랑 subscription key ignore하기
     AlbumItemHolder(View itemView) {
         super(itemView);
@@ -90,9 +98,10 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
     }
 
     public void loadImage(final ImageView imageView, final AlbumItem albumItem) {
+        path = albumItem.getPath();
         Glide.with(imageView.getContext())
                 .asBitmap()
-                .load(albumItem.getPath())
+                .load(path)
                 .listener(new RequestListener<Bitmap>() {
                     @Override
                     public boolean onLoadFailed(@Nullable GlideException e, Object model,
@@ -117,7 +126,8 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
                     @Override
                     public void onResourceReady(Bitmap resource, Transition<? super Bitmap> transition) {
                         imageView.setImageBitmap(resource);
-                        detectAndFrame(resource.copy(resource.getConfig(), false));
+                        startPersonGroupActivity(path);
+//                        detect(resource.copy(resource.getConfig(), false));
                     }
                 });
             }
@@ -169,7 +179,7 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
         }
     }
 
-    private void detectAndFrame(final Bitmap imageBitmap)
+    private void detect(final Bitmap imageBitmap)
     {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         imageBitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
@@ -221,7 +231,25 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
         protected void onPostExecute(Face[] faces) {
             if (faces == null) return;
             for(Face face : faces)
-                Toast.makeText(itemView.getContext(), face.faceId.toString(), Toast.LENGTH_SHORT);
+                Toast.makeText(itemView.getContext(), face.faceId.toString(), Toast.LENGTH_SHORT).show();
         }
     }
+
+    private void startPersonGroupActivity(String path){
+        Intent intent = new Intent(itemView.getContext(), PersonGroupActivity.class);
+        intent.putExtra("path", path);
+
+        if (itemView.getContext() instanceof Activity) {
+            a = ((Activity) itemView.getContext());
+        } else {
+            Toast.makeText( itemView.getContext(), "Error", Toast.LENGTH_SHORT).show();
+        }
+
+        a.startActivity(intent);
+
+    }
+
+
+
+
 }
