@@ -126,7 +126,6 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
                     @Override
                     public void onResourceReady(Bitmap resource, Transition<? super Bitmap> transition) {
                         imageView.setImageBitmap(resource);
-                        startPersonGroupActivity(path);
 //                        detect(resource.copy(resource.getConfig(), false));
                     }
                 });
@@ -233,20 +232,6 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
             for(Face face : faces)
                 Toast.makeText(itemView.getContext(), face.faceId.toString(), Toast.LENGTH_SHORT).show();
         }
-    }
-
-    private void startPersonGroupActivity(String path){
-        Intent intent = new Intent(itemView.getContext(), PersonGroupActivity.class);
-        intent.putExtra("path", path);
-
-        if (itemView.getContext() instanceof Activity) {
-            a = ((Activity) itemView.getContext());
-        } else {
-            Toast.makeText( itemView.getContext(), "Error", Toast.LENGTH_SHORT).show();
-        }
-
-        a.startActivity(intent);
-
     }
 
 

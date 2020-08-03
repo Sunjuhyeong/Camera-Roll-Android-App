@@ -23,6 +23,7 @@ import android.support.annotation.Nullable;
 import android.support.annotation.RequiresApi;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.SharedElementCallback;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.graphics.drawable.DrawableCompat;
@@ -204,6 +205,9 @@ public class AlbumActivity extends ThemeableActivity
                 }
             }
         });
+        //Init PersonGroup
+        Intent intent = new Intent(getApplicationContext() , PersonGroupActivity.class);
+        ActivityCompat.startActivity(getApplicationContext(), intent, null);
 
         recyclerView = findViewById(R.id.recyclerView);
         final int columnCount = Settings.getInstance(this).getColumnCount(this);

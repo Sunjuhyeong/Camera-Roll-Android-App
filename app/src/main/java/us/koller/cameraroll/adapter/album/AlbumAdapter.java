@@ -121,10 +121,6 @@ public class AlbumAdapter extends AbstractRecyclerViewAdapter<Album> {
 
     @Override
     public void onBindViewHolder(@NonNull final RecyclerView.ViewHolder holder, int position) {
-        //Init PersonGroup
-        Intent intent = new Intent(holder.itemView.getContext() , PersonGroupActivity.class);
-        ActivityCompat.startActivity(holder.itemView.getContext(), intent, null);
-
         final AlbumItem albumItem = getData().getAlbumItems().get(position);
 
         if (!albumItem.equals(((AlbumItemHolder) holder).getAlbumItem())) {
