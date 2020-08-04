@@ -1,6 +1,5 @@
 package us.koller.cameraroll.adapter.album.viewHolder;
 
-import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
@@ -41,7 +40,6 @@ import us.koller.cameraroll.util.animators.ColorFade;
 public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
 
     String mPersonGroupId;
-    Activity a;
     String path;
     private Bitmap mBitmap;
     HashMap<Face, Boolean> isMatched = new HashMap<Face, Boolean>();
