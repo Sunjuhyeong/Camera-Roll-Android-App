@@ -29,7 +29,6 @@ import com.microsoft.projectoxford.face.contract.VerifyResult;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.UUID;
@@ -46,7 +45,6 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
     String path;
     private Bitmap mBitmap;
     HashMap<Face, Boolean> isMatched = new HashMap<Face, Boolean>();
-    int bitNum = 0;
     public AlbumItem albumItem;
     private boolean selected = false;
     private Drawable selectorOverlay;
@@ -127,7 +125,6 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
                     public void onResourceReady(Bitmap resource, Transition<? super Bitmap> transition) {
                         imageView.setImageBitmap(resource);
                         mBitmap = resource.copy(resource.getConfig(), false);
-                        bitNum +=1;
                         detect(mBitmap);
                     }
                 });
@@ -219,13 +216,9 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
         @Override
         protected void onPostExecute(Face[] faces) {
             if (faces == null) return;
-            for(Face face : faces){
+            for(Face face : faces) {
                 isMatched.put(face, false);
                 new getPersonListTask(face, mPersonGroupId).execute();
-                isMatched.forEach((_, value) -> {
-                if(!value) {
-                    new AddPersonTask().execute();
-                } });
             }
         }
     }
@@ -300,12 +293,46 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
         protected void onPostExecute(VerifyResult result) {
             if (result != null) {
                 if (result.isIdentical){
-                    new AddFaceTask(mPersonId, mPersonGroupId, mBitmap ,mFace).execute();
+                    new AddFaceTask(mPersonId, mPersonGroupId, mBitmap, mFace).execute();
                     isMatched.put(mFace, true);
-                } else {
-
                 }
+                new AddPersonTask(mBitmap, mFace).execute();
+            }
+        }
+    }
 
+    private class AddPersonTask extends AsyncTask<String, String, UUID> {
+        // Indicate the next step is to add face in this person, or finish editing this person.
+        Bitmap mBitmap;
+        Face mFace;
+
+        AddPersonTask (Bitmap bitmap, Face face) {
+            mBitmap = bitmap;
+            mFace = face;
+        }
+
+        @Override
+        protected UUID doInBackground(String... params) {
+            try{
+                if(!isMatched.get(mFace)){
+                    // Start the request to creating person.
+                    CreatePersonResult createPersonResult = faceServiceClient.createPersonInLargePersonGroup(
+                            params[0],
+                            "unknown" + mFace.faceId,
+                            "user data");
+
+                    return createPersonResult.personId;
+                } return null;
+            } catch (Exception e) {
+                publishProgress(e.getMessage());
+                return null;
+            }
+        }
+
+        @Override
+        protected void onPostExecute(UUID result) {
+            if (result != null) {
+                new AddFaceTask( result, mPersonGroupId, mBitmap, mFace).execute();
             }
         }
     }
@@ -317,8 +344,8 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
         Face mFace;
 
         AddFaceTask(UUID personId, String personGroupId, Bitmap bitmap, Face face) {
-            mPersonGroupId = personGroupId;
             mPersonId = personId;
+            mPersonGroupId = personGroupId;
             mBitmap = bitmap;
             mFace = face;
         }
@@ -335,7 +362,7 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
                         mPersonGroupId,
                         mPersonId,
                         imageInputStream,
-                        "user data",
+                        "user face",
                         mFace.faceRectangle);
                 return true;
             } catch (Exception e) {
@@ -344,39 +371,6 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
             }
         }
     }
-
-    class AddPersonTask extends AsyncTask<String, String, UUID> {
-        // Indicate the next step is to add face in this person, or finish editing this person.
-        boolean mAddFace;
-
-        AddPersonTask (boolean addFace) {
-            mAddFace = addFace;
-        }
-
-        @Override
-        protected UUID doInBackground(String... params) {
-            try{
-                // Start the request to creating person.
-                CreatePersonResult createPersonResult = faceServiceClient.createPersonInLargePersonGroup(
-                        params[0],
-                        "unknown" + ,
-                        "user data");
-
-                return createPersonResult.personId;
-            } catch (Exception e) {
-                publishProgress(e.getMessage());
-                return null;
-            }
-        }
-
-        @Override
-        protected void onPostExecute(UUID result) {
-            if (result != null) {
-                new AddFaceTask( , result, , ).execute();
-            }
-        }
-    }
-
 
     private class deletePersoninLargePersonGroupTask extends AsyncTask<Void, String, Void> {
         private UUID mPersonId;
