@@ -20,13 +20,18 @@ import com.bumptech.glide.request.target.Target;
 import com.bumptech.glide.request.transition.Transition;
 import com.microsoft.projectoxford.face.FaceServiceClient;
 import com.microsoft.projectoxford.face.FaceServiceRestClient;
+import com.microsoft.projectoxford.face.contract.AddPersistedFaceResult;
 import com.microsoft.projectoxford.face.contract.Face;
+import com.microsoft.projectoxford.face.contract.FaceRectangle;
 import com.microsoft.projectoxford.face.contract.Person;
+import com.microsoft.projectoxford.face.contract.VerifyResult;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.util.List;
 import java.util.Locale;
+import java.util.UUID;
 
 import us.koller.cameraroll.R;
 import us.koller.cameraroll.data.models.AlbumItem;
@@ -38,12 +43,12 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
     String mPersonGroupId;
     Activity a;
     String path;
+    private Bitmap mBitmap;
+    int bitNum = 0;
     public AlbumItem albumItem;
     private boolean selected = false;
     private Drawable selectorOverlay;
-    private String sub_key = String.valueOf(R.string.subscription_key);
-    private String endpoint = String.valueOf(R.string.endpoint);
-    private FaceServiceClient faceServiceClient = new FaceServiceRestClient("https://westus.api.cognitive.microsoft.com/face/v1.0/", "23217359959645caa965c459892d5a47");
+    private FaceServiceClient faceServiceClient = new FaceServiceRestClient("https://westus.api.cognitive.microsoft.com/face/v1.0/", "");
 
     //todo Endpoint랑 subscription key ignore하기
     AlbumItemHolder(View itemView) {
@@ -120,8 +125,9 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
                     @Override
                     public void onResourceReady(Bitmap resource, Transition<? super Bitmap> transition) {
                         imageView.setImageBitmap(resource);
-//                        detect(resource.copy(resource.getConfig(), false));
-                        getPersonList(mPersonGroupId);
+                        mBitmap = resource.copy(resource.getConfig(), false);
+                        bitNum +=1;
+                        detect(mBitmap);
                     }
                 });
             }
@@ -179,25 +185,9 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
         imageBitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
         ByteArrayInputStream inputStream = new ByteArrayInputStream(outputStream.toByteArray());
         new detectTask().execute(inputStream);
-
-    }
-
-    private void getPersonList(String mPersonGroupId){
-        new getPersonListTask().execute(mPersonGroupId);
     }
 
     private class detectTask extends AsyncTask<InputStream,String,Face[]> {
-
-        @Override
-        protected void onPreExecute() {
-
-        }
-
-
-        @Override
-        protected void onProgressUpdate(String... values) {
-
-        }
 
         @Override
         protected Face[] doInBackground(InputStream... params) {
@@ -217,7 +207,7 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
                 }
                 publishProgress(
                         String.format(Locale.ENGLISH, "Detection Finished. %d face(s) detected",
-                                result.length)); //todo Locale이 뭔가요
+                                result.length));
                 return result;
             } catch (Exception e) {
                 publishProgress("Detection failed");
@@ -228,21 +218,29 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
         @Override
         protected void onPostExecute(Face[] faces) {
             if (faces == null) return;
-            for(Face face : faces)
-                Toast.makeText(itemView.getContext(), face.faceId.toString(), Toast.LENGTH_SHORT).show();
+            for(Face face : faces){
+                new getPersonListTask(face, mPersonGroupId).execute();
+            }
         }
     }
 
-    private class getPersonListTask extends AsyncTask<String,String,Person[]> {
+    private class getPersonListTask extends AsyncTask<Void,String,Person[]> {
+        private Face mFace;
+        private String mPersonGroupId;
+
+        getPersonListTask (Face face, String personGroupId) {
+            mFace = face;
+            mPersonGroupId = personGroupId;
+        }
 
         @Override
-        protected Person[] doInBackground(String... params) {
+        protected Person[] doInBackground(Void... params) {
 
             try {
-                Person[] result = faceServiceClient.listPersonsInLargePersonGroup(params[0]);
+                Person[] result = faceServiceClient.listPersonsInLargePersonGroup(mPersonGroupId);
                 if (result == null)
                 {
-                    //todo create person
+                    //todo create person when no person
                     return null;
                 }
                 return result;
@@ -257,10 +255,114 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
             if (personList == null) {
                 return;
             }
-            //todo verify
+            for (Person person : personList) {
+                new VerificationTask(mFace, mPersonGroupId, person.personId).execute();
+            }
         }
     }
 
+    private class VerificationTask extends AsyncTask<Void, String, VerifyResult> {
+        // The IDs of two face to verify.
+        private Face mFace;
+        private UUID mPersonId;
+        private String mPersonGroupId;
 
+        VerificationTask (Face face, String personGroupId, UUID personId1) {
+            mFace = face;
+            mPersonGroupId = personGroupId;
+            mPersonId = personId1;
+        }
+
+        @Override
+        protected VerifyResult doInBackground(Void... params) {
+            // Get an instance of face service client to detect faces in image.
+            try{
+                publishProgress("Verifying...");
+
+                // Start verification.
+                return faceServiceClient.verifyInLargePersonGroup(
+                        mFace.faceId,      /* The face ID to verify */
+                        mPersonGroupId, /* The person group ID of the person*/
+                        mPersonId);     /* The person ID to verify */
+            }  catch (Exception e) {
+                publishProgress(e.getMessage());
+                return null;
+            }
+        }
+
+        @Override
+        protected void onPostExecute(VerifyResult result) {
+            if (result != null) {
+                if (result.isIdentical){
+                    bitNum +=1;
+                    bitNum -=1;
+                    new AddFaceTask(mPersonId, mPersonGroupId, mBitmap ,mFace).execute();
+                } else {
+
+                }
+
+            }
+        }
+    }
+
+    private class AddFaceTask extends AsyncTask<Void, String, Boolean> {
+        UUID mPersonId;
+        String mPersonGroupId;
+        Bitmap mBitmap;
+        Face mFace;
+
+        AddFaceTask(UUID personId, String personGroupId, Bitmap bitmap, Face face) {
+            mPersonGroupId = personGroupId;
+            mPersonId = personId;
+            mBitmap = bitmap;
+            mFace = face;
+        }
+
+        @Override
+        protected Boolean doInBackground(Void... params) {
+            // Get an instance of face service client to detect faces in image.
+            try {
+                ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                mBitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
+                InputStream imageInputStream = new ByteArrayInputStream(stream.toByteArray());
+
+                faceServiceClient.addPersonFaceInLargePersonGroup(
+                        mPersonGroupId,
+                        mPersonId,
+                        imageInputStream,
+                        "user data",
+                        mFace.faceRectangle);
+                return true;
+            } catch (Exception e) {
+                publishProgress(e.getMessage());
+                return false;
+            }
+        }
+    }
+
+    private class deletePersoninLargePersonGroupTask extends AsyncTask<Void, String, Void> {
+        private UUID mPersonId;
+        private String mPersonGroupId;
+
+        deletePersoninLargePersonGroupTask (UUID personId, String personGroupId) {
+            mPersonId = personId;
+            mPersonGroupId = personGroupId;
+        }
+
+        @Override
+        protected Void doInBackground(Void... params) {
+
+            try {
+                faceServiceClient.deletePersonInLargePersonGroup(mPersonGroupId, mPersonId);
+
+            } catch (Exception e) {
+                publishProgress("get PersonList failed");
+            }
+            return null;
+        }
+
+    }
 
 }
+
+

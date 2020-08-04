@@ -30,7 +30,7 @@ import us.koller.cameraroll.R;
 
 public class PersonGroupActivity extends AppCompatActivity {
 
-    private FaceServiceClient faceServiceClient = new FaceServiceRestClient("https://westus.api.cognitive.microsoft.com/face/v1.0/", "23217359959645caa965c459892d5a47");
+    private FaceServiceClient faceServiceClient;
     private UUID mFaceId;
     private UUID mPersonId;
     String mPersonGroupId = null;
@@ -40,7 +40,7 @@ public class PersonGroupActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_person_group);
 
-        faceServiceClient = new FaceServiceRestClient("https://westus.api.cognitive.microsoft.com/face/v1.0/", "23217359959645caa965c459892d5a47");
+        faceServiceClient = new FaceServiceRestClient("https://westus.api.cognitive.microsoft.com/face/v1.0/", "");
 
         new InitPersonGroupTask().execute();
 
