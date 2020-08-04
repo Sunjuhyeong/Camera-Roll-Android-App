@@ -4,12 +4,13 @@ import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.support.annotation.Nullable;
+import android.support.annotation.RequiresApi;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.widget.ImageView;
-import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.DataSource;
@@ -20,16 +21,16 @@ import com.bumptech.glide.request.target.Target;
 import com.bumptech.glide.request.transition.Transition;
 import com.microsoft.projectoxford.face.FaceServiceClient;
 import com.microsoft.projectoxford.face.FaceServiceRestClient;
-import com.microsoft.projectoxford.face.contract.AddPersistedFaceResult;
+import com.microsoft.projectoxford.face.contract.CreatePersonResult;
 import com.microsoft.projectoxford.face.contract.Face;
-import com.microsoft.projectoxford.face.contract.FaceRectangle;
 import com.microsoft.projectoxford.face.contract.Person;
 import com.microsoft.projectoxford.face.contract.VerifyResult;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
-import java.util.List;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.UUID;
 
@@ -44,13 +45,13 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
     Activity a;
     String path;
     private Bitmap mBitmap;
+    HashMap<Face, Boolean> isMatched = new HashMap<Face, Boolean>();
     int bitNum = 0;
     public AlbumItem albumItem;
     private boolean selected = false;
     private Drawable selectorOverlay;
     private FaceServiceClient faceServiceClient = new FaceServiceRestClient("https://westus.api.cognitive.microsoft.com/face/v1.0/", "");
 
-    //todo Endpoint랑 subscription key ignore하기
     AlbumItemHolder(View itemView) {
         super(itemView);
         addIndicatorDrawable(itemView);
@@ -131,7 +132,6 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
                     }
                 });
             }
-
 
     void fadeIn() {
         albumItem.hasFadedIn = true;
@@ -215,16 +215,22 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
             }
         }
 
+        @RequiresApi(api = Build.VERSION_CODES.N)
         @Override
         protected void onPostExecute(Face[] faces) {
             if (faces == null) return;
             for(Face face : faces){
+                isMatched.put(face, false);
                 new getPersonListTask(face, mPersonGroupId).execute();
+                isMatched.forEach((_, value) -> {
+                if(!value) {
+                    new AddPersonTask().execute();
+                } });
             }
         }
     }
 
-    private class getPersonListTask extends AsyncTask<Void,String,Person[]> {
+    private class getPersonListTask extends AsyncTask<Void,String,Person[]>{
         private Face mFace;
         private String mPersonGroupId;
 
@@ -294,9 +300,8 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
         protected void onPostExecute(VerifyResult result) {
             if (result != null) {
                 if (result.isIdentical){
-                    bitNum +=1;
-                    bitNum -=1;
                     new AddFaceTask(mPersonId, mPersonGroupId, mBitmap ,mFace).execute();
+                    isMatched.put(mFace, true);
                 } else {
 
                 }
@@ -340,6 +345,39 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
         }
     }
 
+    class AddPersonTask extends AsyncTask<String, String, UUID> {
+        // Indicate the next step is to add face in this person, or finish editing this person.
+        boolean mAddFace;
+
+        AddPersonTask (boolean addFace) {
+            mAddFace = addFace;
+        }
+
+        @Override
+        protected UUID doInBackground(String... params) {
+            try{
+                // Start the request to creating person.
+                CreatePersonResult createPersonResult = faceServiceClient.createPersonInLargePersonGroup(
+                        params[0],
+                        "unknown" + ,
+                        "user data");
+
+                return createPersonResult.personId;
+            } catch (Exception e) {
+                publishProgress(e.getMessage());
+                return null;
+            }
+        }
+
+        @Override
+        protected void onPostExecute(UUID result) {
+            if (result != null) {
+                new AddFaceTask( , result, , ).execute();
+            }
+        }
+    }
+
+
     private class deletePersoninLargePersonGroupTask extends AsyncTask<Void, String, Void> {
         private UUID mPersonId;
         private String mPersonGroupId;
@@ -364,5 +402,3 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
     }
 
 }
-
-
