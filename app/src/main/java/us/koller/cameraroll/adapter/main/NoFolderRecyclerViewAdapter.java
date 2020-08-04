@@ -1,10 +1,8 @@
 package us.koller.cameraroll.adapter.main;
 
-import android.app.Activity;
 import android.content.Context;
-import android.content.Intent;
-import android.support.v4.app.ActivityCompat;
-import android.support.v7.widget.RecyclerView;
+
+import androidx.recyclerview.widget.RecyclerView;
 import android.view.ViewGroup;
 
 import java.util.ArrayList;
@@ -15,7 +13,6 @@ import us.koller.cameraroll.adapter.album.AlbumAdapter;
 import us.koller.cameraroll.data.Settings;
 import us.koller.cameraroll.data.models.Album;
 import us.koller.cameraroll.data.provider.MediaProvider;
-import us.koller.cameraroll.ui.PersonGroupActivity;
 import us.koller.cameraroll.util.SortUtil;
 
 public class NoFolderRecyclerViewAdapter extends AbstractRecyclerViewAdapter<ArrayList<Album>>

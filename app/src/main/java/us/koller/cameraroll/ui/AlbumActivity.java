@@ -19,19 +19,19 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.annotation.Nullable;
-import android.support.annotation.RequiresApi;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.SharedElementCallback;
-import android.support.v4.content.ContextCompat;
-import android.support.v4.graphics.drawable.DrawableCompat;
-import android.support.v7.app.ActionBar;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.widget.GridLayoutManager;
-import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.Toolbar;
+import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.snackbar.Snackbar;
+import androidx.core.app.ActivityCompat;
+import androidx.core.app.SharedElementCallback;
+import androidx.core.content.ContextCompat;
+import androidx.core.graphics.drawable.DrawableCompat;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AlertDialog;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.appcompat.widget.Toolbar;
 import android.transition.Fade;
 import android.transition.Slide;
 import android.transition.TransitionSet;
@@ -148,18 +148,16 @@ public class AlbumActivity extends ThemeableActivity
         MediaProvider.checkPermission(this);
 
         setExitSharedElementCallback(mCallback);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            getWindow().setEnterTransition(new TransitionSet()
-                    .setOrdering(TransitionSet.ORDERING_TOGETHER)
-                    .addTransition(new Slide(Gravity.BOTTOM))
-                    .addTransition(new Fade())
-                    .setInterpolator(new AccelerateDecelerateInterpolator()));
-            getWindow().setReturnTransition(new TransitionSet()
-                    .setOrdering(TransitionSet.ORDERING_TOGETHER)
-                    .addTransition(new Slide(Gravity.BOTTOM))
-                    .addTransition(new Fade())
-                    .setInterpolator(new AccelerateDecelerateInterpolator()));
-        }
+        getWindow().setEnterTransition(new TransitionSet()
+                .setOrdering(TransitionSet.ORDERING_TOGETHER)
+                .addTransition(new Slide(Gravity.BOTTOM))
+                .addTransition(new Fade())
+                .setInterpolator(new AccelerateDecelerateInterpolator()));
+        getWindow().setReturnTransition(new TransitionSet()
+                .setOrdering(TransitionSet.ORDERING_TOGETHER)
+                .addTransition(new Slide(Gravity.BOTTOM))
+                .addTransition(new Fade())
+                .setInterpolator(new AccelerateDecelerateInterpolator()));
 
         final ViewGroup swipeBackView = findViewById(R.id.swipeBackView);
         if (swipeBackView instanceof SwipeBackCoordinatorLayout) {
@@ -170,15 +168,11 @@ public class AlbumActivity extends ThemeableActivity
         setSupportActionBar(toolbar);
         final ActionBar actionBar = getSupportActionBar();
         if (!pick_photos) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                AnimatedVectorDrawable drawable = (AnimatedVectorDrawable)
-                        ContextCompat.getDrawable(AlbumActivity.this, R.drawable.back_to_cancel_avd);
-                //mutating avd to reset it
-                drawable.mutate();
-                toolbar.setNavigationIcon(drawable);
-            } else {
-                toolbar.setNavigationIcon(R.drawable.ic_arrow_back_white);
-            }
+            AnimatedVectorDrawable drawable = (AnimatedVectorDrawable)
+                    ContextCompat.getDrawable(AlbumActivity.this, R.drawable.back_to_cancel_avd);
+            //mutating avd to reset it
+            drawable.mutate();
+            toolbar.setNavigationIcon(drawable);
             Drawable navIcon = toolbar.getNavigationIcon();
             if (navIcon != null) {
                 navIcon = DrawableCompat.wrap(navIcon);
