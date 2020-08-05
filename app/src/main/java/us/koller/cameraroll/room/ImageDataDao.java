@@ -17,6 +17,9 @@ public interface ImageDataDao {
     @Query("SELECT * FROM ImageData WHERE image_ID LIKE :search")
     List<ImageData> findByImage_ID(String search);
 
+    @Query("SELECT * FROM ImageData WHERE thema LIKE :search")
+    List<ImageData> findByThema(String search);
+
     @Insert
     void insert(ImageData imageData);
 

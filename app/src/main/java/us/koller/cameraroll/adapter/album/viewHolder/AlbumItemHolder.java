@@ -171,19 +171,10 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
                         boolean canFace = true;
 
                         // /를 기준으로 폴더명을 따로 파싱할거임
-                        String [] getFolderName = albumItem.getPath().split("/");
+//                        String [] getFolderName = albumItem.getPath().split("/");
                         // 끝에서 두번째가 폴더명임.
-                        String folderName = getFolderName[getFolderName.length -2];
-
-//                        face detect
-//                        detect(mBitmap);
-
-//                        computer vision describe
-//                        doDescribeComputerVision(albumItem.getName(), folderName, resource.copy(resource.getConfig(), false));
-//
-//                        computer vision OCR
-//                        doOCR(albumItem.getName(), folderName, resource.copy(resource.getConfig(), false));
-
+//                        String folderName = getFolderName[getFolderName.length -2];
+                        String folderName = albumItem.getPath();
                         //DB 생성
                         ImageDB db = ImageDB.getDatabase(itemView.getContext());
 
@@ -197,12 +188,8 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
                             //computer vision OCR
                             doOCR(albumItem.getName(), folderName, resource.copy(resource.getConfig(), false));
 
-//                            //tag에 person이 있다면 detect를 실행한다.
-//                            if(db.imageDataDao().findByImage_ID(albumItem.getName()).get(0).getDescribe_tags().contains("person")){
-//                                //detect face
-//                                mBitmap = resource.copy(resource.getConfig(), false);
-//                                detect(mBitmap);
-//                            }
+                            //detect face
+                            detect(albumItem.getName(), folderName, mBitmap);
                         } else{
                             for(int i=0; i<debug.size(); i++){
                                 if(debug.get(i).getThema().equals("Describe")){
@@ -211,6 +198,10 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
 
                                 if(debug.get(i).getThema().equals("OCR")){
                                     canOCR = false;
+                                }
+
+                                if(debug.get(i).getThema().equals("Face_mPersonID")){
+                                    canFace = false;
                                 }
                             }
 
@@ -222,6 +213,11 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
                             if(canOCR){
                                 //computer vision OCR
                                 doOCR(albumItem.getName(), folderName, mBitmap);
+                            }
+
+                            if(canFace){
+                                //detect face
+                                detect(albumItem.getName(), folderName, mBitmap);
                             }
                         }
                     }
@@ -274,15 +270,23 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
         }
     }
 
-    private void detect(final Bitmap imageBitmap)
+    private void detect(String imageName, String folderName, final Bitmap imageBitmap)
     {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         imageBitmap.compress(Bitmap.CompressFormat.JPEG, 50, outputStream);
         ByteArrayInputStream inputStream = new ByteArrayInputStream(outputStream.toByteArray());
-        new detectTask().execute(inputStream);
+        new detectTask(imageName, folderName).execute(inputStream);
     }
 
     private class detectTask extends AsyncTask<InputStream,String,Face[]> {
+
+        private String imageName;
+        private String folderName;
+
+        public detectTask(String imageName, String folderName){
+            this.imageName = imageName;
+            this.folderName = folderName;
+        }
 
         @Override
         protected Face[] doInBackground(InputStream... params) {
@@ -315,7 +319,7 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
             if (faces == null) return;
             for(Face face : faces) {
                 isMatched.put(face, false);
-                new getPersonListTask(face, mPersonGroupId).execute();
+                new getPersonListTask(this.imageName, this.folderName ,face, mPersonGroupId).execute();
             }
         }
     }
@@ -323,10 +327,14 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
     private class getPersonListTask extends AsyncTask<Void,String,Person[]>{
         private Face mFace;
         private String mPersonGroupId;
+        private String imageName;
+        private String folderName;
 
-        getPersonListTask (Face face, String personGroupId) {
+        getPersonListTask (String imageName, String folderName, Face face, String personGroupId) {
             mFace = face;
             mPersonGroupId = personGroupId;
+            this.imageName = imageName;
+            this.folderName = folderName;
         }
 
         @Override
@@ -352,7 +360,7 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
                 return;
             }
             for (Person person : personList) {
-                new VerificationTask(mFace, mPersonGroupId, person.personId).execute();
+                new VerificationTask(this.imageName, this.folderName, mFace, mPersonGroupId, person.personId).execute();
             }
         }
     }
@@ -362,11 +370,15 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
         private Face mFace;
         private UUID mPersonId;
         private String mPersonGroupId;
+        private String imageName;
+        private String folderName;
 
-        VerificationTask (Face face, String personGroupId, UUID personId1) {
+        VerificationTask (String imageName, String folderName, Face face, String personGroupId, UUID personId1) {
             mFace = face;
             mPersonGroupId = personGroupId;
             mPersonId = personId1;
+            this.imageName = imageName;
+            this.folderName = folderName;
         }
 
         @Override
@@ -390,10 +402,10 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
         protected void onPostExecute(VerifyResult result) {
             if (result != null) {
                 if (result.isIdentical){
-                    new AddFaceTask(mPersonId, mPersonGroupId, mBitmap, mFace).execute();
+                    new AddFaceTask(this.imageName, this.folderName, mPersonId, mPersonGroupId, mBitmap, mFace).execute();
                     isMatched.put(mFace, true);
                 }
-                new AddPersonTask(mBitmap, mFace).execute(mPersonGroupId);
+                new AddPersonTask(this.imageName, this.folderName, mBitmap, mFace).execute(mPersonGroupId);
             }
         }
     }
@@ -402,10 +414,14 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
         // Indicate the next step is to add face in this person, or finish editing this person.
         Bitmap mBitmap;
         Face mFace;
+        private String imageName;
+        private String folderName;
 
-        AddPersonTask (Bitmap bitmap, Face face) {
+        AddPersonTask (String imageName, String folderName, Bitmap bitmap, Face face) {
             mBitmap = bitmap;
             mFace = face;
+            this.imageName = imageName;
+            this.folderName = folderName;
         }
 
         @Override
@@ -429,7 +445,7 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
         @Override
         protected void onPostExecute(UUID result) {
             if (result != null) {
-                new AddFaceTask( result, mPersonGroupId, mBitmap, mFace).execute();
+                new AddFaceTask(this.imageName,this.folderName, result, mPersonGroupId, mBitmap, mFace).execute();
             }
         }
     }
@@ -439,12 +455,16 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
         String mPersonGroupId;
         Bitmap mBitmap;
         Face mFace;
+        private String imageName;
+        private String folderName;
 
-        AddFaceTask(UUID personId, String personGroupId, Bitmap bitmap, Face face) {
+        AddFaceTask(String imageName, String folderName, UUID personId, String personGroupId, Bitmap bitmap, Face face) {
             mPersonId = personId;
             mPersonGroupId = personGroupId;
             mBitmap = bitmap;
             mFace = face;
+            this.imageName = imageName;
+            this.folderName = folderName;
         }
 
         @Override
@@ -452,7 +472,7 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
             // Get an instance of face service client to detect faces in image.
             try {
                 ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                mBitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
+                mBitmap.compress(Bitmap.CompressFormat.JPEG, 50, stream);
                 InputStream imageInputStream = new ByteArrayInputStream(stream.toByteArray());
 
                 faceServiceClient.addPersonFaceInLargePersonGroup(
@@ -465,6 +485,22 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
             } catch (Exception e) {
                 publishProgress(e.getMessage());
                 return false;
+            }
+        }
+
+        @Override
+        protected void onPostExecute(Boolean aBoolean) {
+            if (aBoolean){
+                //todo: DB에 mPersonId 저장
+                try {
+                    insertToDB(this.imageName, this.folderName, "Face_mPersonID", mPersonId.toString());
+                    insertToDB(this.imageName, this.folderName, "Face_mFace_height", Integer.toString(mFace.faceRectangle.height));
+                    insertToDB(this.imageName, this.folderName, "Face_mFace_width", Integer.toString(mFace.faceRectangle.width));
+                    insertToDB(this.imageName, this.folderName, "Face_mFace_left", Integer.toString(mFace.faceRectangle.left));
+                    insertToDB(this.imageName, this.folderName, "Face_mFace_top", Integer.toString(mFace.faceRectangle.top));
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
             }
         }
     }
@@ -653,11 +689,6 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
         //메인쓰레드가 아니라 백그라운드에서 작업이 일어나도록 insertasync함수를 쓴다.
         //db에 데이터를 보내는거임
         ImageData imageData = new ImageData(imageName, folderName, thema, dataString);
-
-//        //DB에 넣을 것이 describe이면 tags를 설정해준다.
-//        if(imageData.getThema().equals("Describe")){
-//            imageData.setDescribe_tagsByDataString(dataString);
-//        }
 
         new InsertAsyncTask(db.imageDataDao()).execute(imageData);
         Toast.makeText(itemView.getContext(), "정보가 저장되었습니다.", Toast.LENGTH_SHORT).show();
