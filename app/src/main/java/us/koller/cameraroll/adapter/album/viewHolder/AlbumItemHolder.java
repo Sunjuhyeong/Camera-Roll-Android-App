@@ -54,6 +54,25 @@ import us.koller.cameraroll.room.ImageDataDao;
 import us.koller.cameraroll.util.Util;
 import us.koller.cameraroll.util.animators.ColorFade;
 
+import com.microsoft.projectoxford.face.contract.*;
+
+import org.json.JSONException;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.UUID;
+
+import us.koller.cameraroll.R;
+import us.koller.cameraroll.data.models.AlbumItem;
+import us.koller.cameraroll.util.Util;
+import us.koller.cameraroll.util.animators.ColorFade;
+
 public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
 
     String mPersonGroupId;
@@ -146,13 +165,15 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
                     @Override
                     public void onResourceReady(Bitmap resource, Transition<? super Bitmap> transition) {
                         imageView.setImageBitmap(resource);
+                        mBitmap = resource.copy(resource.getConfig(), false);
+                        boolean canDescribe = true;
+                        boolean canOCR = true;
+                        boolean canFace = true;
 
                         // /를 기준으로 폴더명을 따로 파싱할거임
                         String [] getFolderName = albumItem.getPath().split("/");
-
                         // 끝에서 두번째가 폴더명임.
                         String folderName = getFolderName[getFolderName.length -2];
-                        mBitmap = resource.copy(resource.getConfig(), false);
 
 //                        face detect
 //                        detect(mBitmap);
@@ -163,7 +184,46 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
 //                        computer vision OCR
 //                        doOCR(albumItem.getName(), folderName, resource.copy(resource.getConfig(), false));
 
+                        //DB 생성
+                        ImageDB db = ImageDB.getDatabase(itemView.getContext());
 
+                        List<ImageData> debug = db.imageDataDao().findByImage_ID(albumItem.getName());
+
+                        //image파일을 처음보는 경우
+                        if(debug.size() == 0){
+                            //computer vision describe
+                            doDescribeComputerVision(albumItem.getName(), folderName, resource.copy(resource.getConfig(), false));
+
+                            //computer vision OCR
+                            doOCR(albumItem.getName(), folderName, resource.copy(resource.getConfig(), false));
+
+//                            //tag에 person이 있다면 detect를 실행한다.
+//                            if(db.imageDataDao().findByImage_ID(albumItem.getName()).get(0).getDescribe_tags().contains("person")){
+//                                //detect face
+//                                mBitmap = resource.copy(resource.getConfig(), false);
+//                                detect(mBitmap);
+//                            }
+                        } else{
+                            for(int i=0; i<debug.size(); i++){
+                                if(debug.get(i).getThema().equals("Describe")){
+                                    canDescribe = false;
+                                }
+
+                                if(debug.get(i).getThema().equals("OCR")){
+                                    canOCR = false;
+                                }
+                            }
+
+                            if(canDescribe){
+                                //computer vision describe
+                                doDescribeComputerVision(albumItem.getName(), folderName, mBitmap);
+                            }
+
+                            if(canOCR){
+                                //computer vision OCR
+                                doOCR(albumItem.getName(), folderName, mBitmap);
+                            }
+                        }
                     }
                 });
             }
@@ -217,7 +277,7 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
     private void detect(final Bitmap imageBitmap)
     {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        imageBitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
+        imageBitmap.compress(Bitmap.CompressFormat.JPEG, 50, outputStream);
         ByteArrayInputStream inputStream = new ByteArrayInputStream(outputStream.toByteArray());
         new detectTask().execute(inputStream);
     }
@@ -433,13 +493,12 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
 
     //Computer Vision describe
     public void doDescribeComputerVision(String imageName, String folderName, Bitmap visionImage) {
-//        textView.setText("Describing...");
+
         try {
             new visionDescribeTask(imageName, folderName, visionImage).execute();
         } catch (Exception e)
         {
             Toast.makeText(itemView.getContext(), "Error encountered. Exception is: " + e.toString(), Toast.LENGTH_SHORT).show();
-//            textView.setText("Error encountered. Exception is: " + e.toString());
         }
     }
 
@@ -479,27 +538,17 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
         @Override
         protected void onPostExecute(String describeData) {
             super.onPostExecute(describeData);
-            // Display based on error existence
-//            textView.setText("");
+
             if (e != null) {
-//                textView.setText("Error: " + e.getMessage());
                 this.e = null;
+                Toast.makeText(itemView.getContext(), "onPostExecute Error: Describe", Toast.LENGTH_SHORT).show();
             } else {
-//                Gson gson = new Gson();
-//                String temp= "";
-
-                //result에서 원하는 타이틀을 꺼낼수 있음. ex) metadata, captions
-                //그냥 describeData는 이걸 json 파일이 String으로 저장되어있음.
-//                AnalysisResult result = gson.fromJson(describeData, AnalysisResult.class);
-
-//                for (Caption caption: result.description.captions) {
-//                    temp += "Caption: " + caption.text + ", confidence: " + caption.confidence + "\n";
-//                }
-
-
-                //DB에 넣을 값을 함수로 지정해줌.
-//                setDescribe(describeData);
-                insertToDB(this.imageName, this.folderName, "Describe", describeData);
+                //DB에 데이터 저장
+                try {
+                    insertToDB(this.imageName, this.folderName, "Describe", describeData);
+                } catch (JSONException ex) {
+                    ex.printStackTrace();
+                }
             }
         }
     }
@@ -534,8 +583,8 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
             super.onPostExecute(ocrData);
 
             if (e != null) {
-//                textView.setText("Error: " + e.getMessage());
                 this.e = null;
+                Toast.makeText(itemView.getContext(), "onPostExecute Error: OCR", Toast.LENGTH_SHORT).show();
             } else {
                 Gson gson = new Gson();
 
@@ -552,11 +601,11 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
                     ocrResult += "\n\n";
                 }
 
-                //DB에 저장할 값을 지정해주는 것
-                //굳이 함수로 안해도 되는데 나중에 디버깅하기 쉬울라고 함.
-//                setOCR(ocrResult);
-
-                insertToDB(this.imageName, this.folderName, "OCR", ocrResult);
+                try {
+                    insertToDB(this.imageName, this.folderName, "OCR", ocrResult);
+                } catch (JSONException ex) {
+                    ex.printStackTrace();
+                }
             }
         }
     }
@@ -567,7 +616,7 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
 
         // Put the image into an input stream for detection.
         ByteArrayOutputStream output = new ByteArrayOutputStream();
-        visionImage.compress(Bitmap.CompressFormat.JPEG, 100, output);
+        visionImage.compress(Bitmap.CompressFormat.JPEG, 50, output);
         ByteArrayInputStream inputStream = new ByteArrayInputStream(output.toByteArray());
 
         AnalysisResult v = this.visionServiceClient.describe(inputStream, 1);
@@ -584,7 +633,7 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
 
         // Put the image into an input stream for detection.
         ByteArrayOutputStream output = new ByteArrayOutputStream();
-        visionImage.compress(Bitmap.CompressFormat.JPEG, 100, output);
+        visionImage.compress(Bitmap.CompressFormat.JPEG, 50, output);
         ByteArrayInputStream inputStream = new ByteArrayInputStream(output.toByteArray());
 
         OCR ocr;
@@ -597,13 +646,20 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
     }
 
     //DB 관련 내용
-    public void insertToDB(String imageName, String folderName, String thema, String dataString){
+    public void insertToDB(String imageName, String folderName, String thema, String dataString) throws JSONException {
         //DB 생성
         ImageDB db = ImageDB.getDatabase(itemView.getContext());
 
         //메인쓰레드가 아니라 백그라운드에서 작업이 일어나도록 insertasync함수를 쓴다.
         //db에 데이터를 보내는거임
-        new InsertAsyncTask(db.imageDataDao()).execute(new ImageData(imageName, folderName, thema, dataString));
+        ImageData imageData = new ImageData(imageName, folderName, thema, dataString);
+
+//        //DB에 넣을 것이 describe이면 tags를 설정해준다.
+//        if(imageData.getThema().equals("Describe")){
+//            imageData.setDescribe_tagsByDataString(dataString);
+//        }
+
+        new InsertAsyncTask(db.imageDataDao()).execute(imageData);
         Toast.makeText(itemView.getContext(), "정보가 저장되었습니다.", Toast.LENGTH_SHORT).show();
     }
 
