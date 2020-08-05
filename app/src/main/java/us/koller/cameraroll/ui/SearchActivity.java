@@ -12,16 +12,16 @@ import us.koller.cameraroll.data.models.Album;
 
 public class SearchActivity extends AppCompatActivity {
 
-
     public Album album;
     private int SearchCode = 26;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_search);
 
         //todo: Make Album by search Results
-
+        album = new Album().setPath("");
         startAlbumActivity();
     }
 
@@ -32,9 +32,19 @@ public class SearchActivity extends AppCompatActivity {
         ActivityOptionsCompat options;
 
         //noinspection unchecked
-        options = ActivityOptionsCompat.makeSceneTransitionAnimation((Activity) getApplicationContext());
+        options = ActivityOptionsCompat.makeSceneTransitionAnimation((Activity) this);
         startActivityForResult(intent,
                 SearchCode, options.toBundle());
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == SearchCode) {
+            if (resultCode != RESULT_CANCELED) {
+                setResult(RESULT_OK, data);
+            }
+            this.finish();
+        }
+    }
 }
