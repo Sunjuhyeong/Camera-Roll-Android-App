@@ -64,9 +64,9 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
     private boolean selected = false;
     private Drawable selectorOverlay;
 
-    private final String sub_key_face = "451d66571b404c819ddc7bd11079341f";
+    private final String sub_key_face = itemView.getContext().getString(R.string.subscription_key_face);
     private final String endpoint_face = "https://westus.api.cognitive.microsoft.com/face/v1.0/";
-    private final String sub_key_vision = "e77f79b5c0124a459198612807cae2c6";
+    private final String sub_key_vision = itemView.getContext().getString(R.string.subscription_key_vision);
     private final String endpoint_vision = "https://eastus.api.cognitive.microsoft.com/vision/v1.0";
 
     private VisionServiceClient visionServiceClient = new VisionServiceRestClient(sub_key_vision, endpoint_vision);

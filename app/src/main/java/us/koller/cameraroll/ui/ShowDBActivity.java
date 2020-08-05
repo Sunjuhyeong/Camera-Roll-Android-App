@@ -1,10 +1,9 @@
 package us.koller.cameraroll.ui;
 
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
 import android.widget.TextView;
 
-import java.util.List;
+import androidx.appcompat.app.AppCompatActivity;
 
 import us.koller.cameraroll.R;
 import us.koller.cameraroll.room.ImageDB;
