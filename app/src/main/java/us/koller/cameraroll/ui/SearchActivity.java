@@ -12,6 +12,7 @@ import android.widget.GridView;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityOptionsCompat;
+import androidx.core.util.Pools;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.SimpleTarget;
@@ -25,19 +26,24 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import java.util.ArrayList;
+import java.util.List;
 import us.koller.cameraroll.R;
 import us.koller.cameraroll.adapter.SearchAdapter;
 import us.koller.cameraroll.data.models.Album;
+import us.koller.cameraroll.data.models.AlbumItem;
+import us.koller.cameraroll.room.ImageDB;
+import us.koller.cameraroll.room.ImageData;
 import us.koller.cameraroll.data.models.AlbumItem;
 
 public class SearchActivity extends AppCompatActivity {
 
     private int AlbumCode = 39;
     private static final double FACE_RECT_SCALE_RATIO = 1.3;
-    private final String sub_key_face = getApplicationContext().getString(R.string.subscription_key_face);
+    private String sub_key_face = null;
     private final String endpoint_face = "https://westus.api.cognitive.microsoft.com/face/v1.0/";
     private String mPersonGroupId;
-    private FaceServiceClient faceServiceClient = new FaceServiceRestClient(endpoint_face, sub_key_face);
+    private FaceServiceClient faceServiceClient;
     private SearchAdapter adapter;
     private GridView gv;
     private File file;
@@ -46,8 +52,49 @@ public class SearchActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_search);
+        sub_key_face = getResources().getString(R.string.subscription_key_face);
+        faceServiceClient = new FaceServiceRestClient(endpoint_face, sub_key_face);
+        String searchResult = "search";
+        ArrayList<String> checkId = new ArrayList<>();
+        ArrayList<AlbumItem> albumItemList = new ArrayList<>();
 
-        mPersonGroupId = getIntent().getStringExtra("mPersonGroupID"); //todo : 제대로 오나?
+        //DB 생성
+        ImageDB db = ImageDB.getDatabase(this);
+
+        //DB에 Thema가 Describe인 애들이랑 OCR인 애들을 부름
+        List<ImageData> imageDataListDescribe = db.imageDataDao().findByThema("Describe");
+        List<ImageData> imageDataListOCR = db.imageDataDao().findByThema("OCR");
+
+        //folderName이 path라고 생각하면됨
+        //먼저 Describe에서 찾는다.
+        for(int i=0; i<imageDataListDescribe.size(); i++){
+            //이미 찾았던거면 안넣는다.
+            if(!checkId.contains(imageDataListDescribe.get(i).getImage_ID())) {
+                if (imageDataListDescribe.get(i).getDataString().contains(searchResult)) {
+                    //folderName(path)를 통해 albumItem instance 만든다.
+                    albumItemList.add(AlbumItem.getInstance(imageDataListDescribe.get(i).folderName));
+
+                    //뭐 넣었는지 체크용
+                    checkId.add(imageDataListDescribe.get(i).getImage_ID());
+                }
+            }
+        }
+
+        //OCR 정보에서 검색하기
+        for(int i=0; i<imageDataListOCR.size(); i++){
+            if(!checkId.contains(imageDataListOCR.get(i).getImage_ID())) {
+                //이미 찾았던거면 안넣는다.
+                if (imageDataListOCR.get(i).getDataString().contains(searchResult)) {
+                    //folderName(path)를 통해 albumItem instance 만든다.
+                    albumItemList.add(AlbumItem.getInstance(imageDataListOCR.get(i).folderName));
+
+                    //뭐 넣었는지 체크용
+                    checkId.add(imageDataListOCR.get(i).getImage_ID());
+                }
+            }
+        }
+
+        mPersonGroupId = getIntent().getStringExtra("mPersonGroupID");
         adapter = new SearchAdapter();
         gv = (GridView)findViewById(R.id.faceGridView);
 
@@ -100,6 +147,7 @@ public class SearchActivity extends AppCompatActivity {
                     file = new File(getApplicationContext().getFilesDir(), "cache"+ personList[position].personId.toString());
                     album.setPath(file.getPath());
                     startAlbumActivity(album);
+
 
                 }
             });

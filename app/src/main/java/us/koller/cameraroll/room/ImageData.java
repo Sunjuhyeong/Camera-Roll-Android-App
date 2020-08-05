@@ -18,10 +18,10 @@ public class ImageData {
     public String image_ID;
     public String folderName;
     public String dataString;
-    //thema는 "Describe"와 "OCR"이 존재
+
+    //thema는 "Describe", "OCR", "Face_mPersonID",
+    //"Face_mFace_height", "Face_mFace_width", "Face_mFace_top", "Face_mFace_left"가 존재
     public String thema;
-//    //thema가 Describe인 경우만 존재
-//    public String describe_tags;
 
     public ImageData(String image_ID, String folderName, String thema, String dataString){
         this.image_ID = image_ID;
@@ -98,7 +98,7 @@ public class ImageData {
         return "Data ID: " + this.ID + "\n\n"
                 + "IMAGE NAME: " + this.image_ID + "\n\n"
                 + "IMAGE FOLDER: " + this.folderName + "\n\n"
-                + "IMAGE THEMA: " + this.thema + "\n\n"
-                + "IMAGE DATA: " + this.dataString + "\n\n";
+                + "DATA THEMA: " + this.thema + "\n\n"
+                + "DATA: " + this.dataString + "\n\n";
     }
 }
