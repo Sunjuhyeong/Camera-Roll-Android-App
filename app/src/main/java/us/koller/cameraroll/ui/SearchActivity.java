@@ -20,8 +20,13 @@ public class SearchActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_search);
 
-        //todo: Make Album by search Results
         album = new Album().setPath("");
+
+        //todo: Make Album by search Results
+
+        //todo: or selected face
+
+
         startAlbumActivity();
     }
 

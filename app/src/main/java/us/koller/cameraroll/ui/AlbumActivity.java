@@ -615,6 +615,7 @@ public class AlbumActivity extends ThemeableActivity
             case R.id.search:
                 Intent intentS = new Intent(this, SearchActivity.class);
                 intentS.putExtra(ALBUM_PATH, album.getPath());
+                intentS.putExtra("mPersonGroupID", mPersonGroupId );
                 startActivityForResult(intentS, SearchCode);
                 break;
 
