@@ -30,6 +30,7 @@ import us.koller.cameraroll.R;
 import us.koller.cameraroll.data.Settings;
 import us.koller.cameraroll.data.models.VirtualAlbum;
 import us.koller.cameraroll.data.provider.Provider;
+import us.koller.cameraroll.room.ImageDB;
 import us.koller.cameraroll.themes.Theme;
 import us.koller.cameraroll.util.Util;
 
@@ -41,6 +42,7 @@ public class VirtualAlbumsActivity extends ThemeableActivity {
     private RecyclerViewAdapter.OnVirtualAlbumChangedListener onVirtualAlbumChangedListener;
 
     private Menu menu;
+    private TextView textView;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {

@@ -43,6 +43,7 @@ import android.view.WindowInsets;
 import android.view.WindowManager;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.davemorrissey.labs.subscaleview.ImageViewState;
@@ -68,6 +69,8 @@ import us.koller.cameraroll.data.models.Photo;
 import us.koller.cameraroll.data.provider.MediaProvider;
 import us.koller.cameraroll.data.Settings;
 import us.koller.cameraroll.data.models.Video;
+import us.koller.cameraroll.room.ImageDB;
+import us.koller.cameraroll.room.ImageData;
 import us.koller.cameraroll.util.ParallaxTransformer;
 import us.koller.cameraroll.util.animators.ColorFade;
 import us.koller.cameraroll.util.MediaType;

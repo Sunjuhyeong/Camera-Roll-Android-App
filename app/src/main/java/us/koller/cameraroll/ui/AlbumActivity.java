@@ -132,7 +132,7 @@ public class AlbumActivity extends ThemeableActivity
 
     private String mPersonGroupId;
     private int PersonGroupCode = 13;
-
+    private int SearchCode = 26;
     @Override
     protected void onCreate(@Nullable final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -599,6 +599,7 @@ public class AlbumActivity extends ThemeableActivity
                 }).show();
                 break;
             case R.id.sort_by_date:
+
             case R.id.sort_by_name:
                 item.setChecked(true);
 
@@ -610,6 +611,13 @@ public class AlbumActivity extends ThemeableActivity
 
                 recyclerViewAdapter.notifyDataSetChanged();
                 break;
+
+            case R.id.search:
+                Intent intentS = new Intent(this, SearchActivity.class);
+                intentS.putExtra(ALBUM_PATH, album.getPath());
+                startActivityForResult(intentS, SearchCode);
+                break;
+
             default:
                 break;
         }
@@ -625,13 +633,12 @@ public class AlbumActivity extends ThemeableActivity
                 recyclerViewAdapter.setPersonGroupId(mPersonGroupId);
             }
         }
-        else{
-            switch (resultCode) {
-                default:
-                    if (data != null && data.getAction() != null) {
-                        onNewIntent(data);
-                    }
-                    break;
+        else if (requestCode == SearchCode){
+            //todo implementation
+        }
+        else{ //default
+            if (data != null && data.getAction() != null) {
+                onNewIntent(data);
             }
         }
     }
