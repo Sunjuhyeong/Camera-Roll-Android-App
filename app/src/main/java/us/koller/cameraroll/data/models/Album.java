@@ -22,10 +22,11 @@ public class Album
     private int hidden = -1;
     public boolean excluded;
     public boolean pinned;
+    public boolean cached;
 
     public Album() {
         albumItems = new ArrayList<>();
-
+        cached = false;
         excluded = false;
         pinned = false;
     }
@@ -40,6 +41,14 @@ public class Album
                 Provider.getPinnedPaths());
 
         return this;
+    }
+
+    public boolean getCached(){
+        return this.cached;
+    }
+
+    public void setCached(boolean b){
+        this.cached = b;
     }
 
     public boolean isHidden() {

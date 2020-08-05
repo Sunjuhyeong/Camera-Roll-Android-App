@@ -20,6 +20,7 @@ import com.microsoft.projectoxford.face.FaceServiceRestClient;
 import com.microsoft.projectoxford.face.contract.FaceRectangle;
 import com.microsoft.projectoxford.face.contract.Person;
 
+import java.io.File;
 import java.io.IOException;
 
 import us.koller.cameraroll.R;
@@ -28,7 +29,7 @@ import us.koller.cameraroll.data.models.Album;
 
 public class SearchActivity extends AppCompatActivity {
 
-    private int SearchCode = 26;
+    private int AlbumCode = 39;
     private static final double FACE_RECT_SCALE_RATIO = 1.3;
     private final String sub_key_face = getApplicationContext().getString(R.string.subscription_key_face);
     private final String endpoint_face = "https://westus.api.cognitive.microsoft.com/face/v1.0/";
@@ -36,6 +37,7 @@ public class SearchActivity extends AppCompatActivity {
     private FaceServiceClient faceServiceClient = new FaceServiceRestClient(endpoint_face, sub_key_face);
     private SearchAdapter adapter;
     private GridView gv;
+    private File file;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,17 +60,21 @@ public class SearchActivity extends AppCompatActivity {
         //noinspection unchecked
         options = ActivityOptionsCompat.makeSceneTransitionAnimation((Activity) this);
         startActivityForResult(intent,
-                SearchCode, options.toBundle());
+                AlbumCode, options.toBundle());
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == SearchCode) {
+        if (requestCode == AlbumCode) {
             if (resultCode != RESULT_CANCELED) {
                 setResult(RESULT_OK, data);
             }
-            this.finish();
+            if(file.delete())
+                this.finish();
+            else{
+                //todo: something wrong
+            }
         }
     }
 
@@ -112,9 +118,14 @@ public class SearchActivity extends AppCompatActivity {
                                         int position, long id) {
                     Album album = new Album().setPath("");
 
-                    //todo : Make Album of selected face
+                    //todo : Make Album of selected person
+                    album.setCached(true);
+                    file = new File(getApplicationContext().getFilesDir(), "cache"+ personList[position].personId.toString());
+                    album.setPath(file.getPath());
 
                     startAlbumActivity(album);
+
+
                 }
             });
         }
