@@ -43,7 +43,7 @@ public class Delete extends FileOperation {
                 result = deleteFileOnRemovableStorage(getApplicationContext(), treeUri, files[i].getPath());
             } else {
                 result = deleteFile(files[i].getPath());
-                //Delete Album, when empty
+                //DeleteAlbum, when empty
                 /*String parentPath = Util.getParentPath(files[i].getPath());
                 if (result && Util.isDirectoryEmpty(parentPath)) {
                     deleteFile(parentPath);

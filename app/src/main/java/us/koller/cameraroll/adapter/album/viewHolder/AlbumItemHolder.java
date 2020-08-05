@@ -64,7 +64,7 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
     private boolean selected = false;
     private Drawable selectorOverlay;
 
-    private final String sub_key_face = "b8be57135c374d328ca11f0392c24516";
+    private final String sub_key_face = "451d66571b404c819ddc7bd11079341f";
     private final String endpoint_face = "https://westus.api.cognitive.microsoft.com/face/v1.0/";
     private final String sub_key_vision = "e77f79b5c0124a459198612807cae2c6";
     private final String endpoint_vision = "https://eastus.api.cognitive.microsoft.com/vision/v1.0";
@@ -154,13 +154,13 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
                         String folderName = getFolderName[getFolderName.length -2];
                         mBitmap = resource.copy(resource.getConfig(), false);
 
-                        //face detect task
-                        detect(mBitmap);
+//                        face detect
+//                        detect(mBitmap);
 
-//                        //computer vision describe
+//                        computer vision describe
 //                        doDescribeComputerVision(albumItem.getName(), folderName, resource.copy(resource.getConfig(), false));
 //
-//                        //computer vision OCR
+//                        computer vision OCR
 //                        doOCR(albumItem.getName(), folderName, resource.copy(resource.getConfig(), false));
 
 
@@ -333,7 +333,7 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
                     new AddFaceTask(mPersonId, mPersonGroupId, mBitmap, mFace).execute();
                     isMatched.put(mFace, true);
                 }
-                new AddPersonTask(mBitmap, mFace).execute();
+                new AddPersonTask(mBitmap, mFace).execute(mPersonGroupId);
             }
         }
     }

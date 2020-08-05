@@ -21,7 +21,7 @@ public class PersonGroupActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_person_group);
-        String face_sub_key = "b8be57135c374d328ca11f0392c24516";
+        String face_sub_key = "451d66571b404c819ddc7bd11079341f";
         faceServiceClient = new FaceServiceRestClient("https://westus.api.cognitive.microsoft.com/face/v1.0/", face_sub_key);
 
         new InitPersonGroupTask().execute();
