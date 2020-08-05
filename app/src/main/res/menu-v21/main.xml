@@ -67,4 +67,10 @@
         android:icon="@drawable/ic_info_white"
         android:title="@string/about"
         app:showAsAction="never" />
+
+    <item
+        android:id="@+id/showDB"
+        android:icon="@drawable/ic_info_white"
+        android:title="showDB"
+        app:showAsAction="never" />
 </menu>

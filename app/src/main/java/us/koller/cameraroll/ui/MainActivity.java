@@ -602,6 +602,10 @@ public class MainActivity extends ThemeableActivity {
                 startActivity(new Intent(this, FileExplorerActivity.class),
                         ActivityOptionsCompat.makeSceneTransitionAnimation(this).toBundle());
                 break;
+            case R.id.showDB:
+                startActivity(new Intent(this, ShowDBActivity.class),
+                        ActivityOptionsCompat.makeSceneTransitionAnimation(this).toBundle());
+                break;
             case R.id.settings:
                 startActivityForResult(new Intent(this, SettingsActivity.class),
                         SETTINGS_REQUEST_CODE);

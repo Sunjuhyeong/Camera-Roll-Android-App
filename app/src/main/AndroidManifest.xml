@@ -161,6 +161,8 @@
         <service
             android:name=".data.fileOperations.Rename"
             tools:ignore="InnerclassSeparator" />
+
+        <activity android:name=".ui.ShowDBActivity"/>
     </application>
 
 </manifest>

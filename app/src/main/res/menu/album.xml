@@ -80,4 +80,5 @@
         android:icon="@drawable/ic_text_format_white"
         android:title="@string/rename"
         app:showAsAction="never" />
+
 </menu>
