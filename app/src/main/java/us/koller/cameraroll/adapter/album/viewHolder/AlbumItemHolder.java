@@ -47,11 +47,15 @@ import us.koller.cameraroll.util.animators.ColorFade;
 
 import com.microsoft.projectoxford.face.contract.*;
 
+import org.json.JSONException;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
@@ -75,9 +79,9 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
 //    private String sub_key_vision = String.valueOf(R.string.subscription_key);
 //    private String endpoint_vision = String.valueOf(R.string.endpoint);
 
-    private final String sub_key_face = "23217359959645caa965c459892d5a47";
+    private final String sub_key_face = "b8be57135c374d328ca11f0392c24516";
     private final String endpoint_face = "https://westus.api.cognitive.microsoft.com/face/v1.0/";
-    private final String sub_key_vision = "e77f79b5c0124a459198612807cae2c6";
+    private final String sub_key_vision = "ed0118b3097f4a3cbc6f2cdf055b9450";
     private final String endpoint_vision = "https://eastus.api.cognitive.microsoft.com/vision/v1.0";
 
     private VisionServiceClient visionServiceClient = new VisionServiceRestClient(sub_key_vision, endpoint_vision);
@@ -157,21 +161,56 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
                     @Override
                     public void onResourceReady(Bitmap resource, Transition<? super Bitmap> transition) {
                         imageView.setImageBitmap(resource);
+                        mBitmap = resource.copy(resource.getConfig(), false);
+                        boolean canDescribe = true;
+                        boolean canOCR = true;
+                        boolean canFace = true;
 
                         // /를 기준으로 폴더명을 따로 파싱할거임
                         String [] getFolderName = albumItem.getPath().split("/");
-
                         // 끝에서 두번째가 폴더명임.
                         String folderName = getFolderName[getFolderName.length -2];
-                        mBitmap = resource.copy(resource.getConfig(), false);
-                        detect(mBitmap);
-//                        //computer vision describe
-//                        doDescribeComputerVision(albumItem.getName(), folderName, resource.copy(resource.getConfig(), false));
-//
-//                        //computer vision OCR
-//                        doOCR(albumItem.getName(), folderName, resource.copy(resource.getConfig(), false));
 
+                        //DB 생성
+                        ImageDB db = ImageDB.getDatabase(itemView.getContext());
 
+                        List<ImageData> debug = db.imageDataDao().findByImage_ID(albumItem.getName());
+
+                        //image파일을 처음보는 경우
+                        if(debug.size() == 0){
+                            //computer vision describe
+                            doDescribeComputerVision(albumItem.getName(), folderName, resource.copy(resource.getConfig(), false));
+
+                            //computer vision OCR
+                            doOCR(albumItem.getName(), folderName, resource.copy(resource.getConfig(), false));
+
+//                            //tag에 person이 있다면 detect를 실행한다.
+//                            if(db.imageDataDao().findByImage_ID(albumItem.getName()).get(0).getDescribe_tags().contains("person")){
+//                                //detect face
+//                                mBitmap = resource.copy(resource.getConfig(), false);
+//                                detect(mBitmap);
+//                            }
+                        } else{
+                            for(int i=0; i<debug.size(); i++){
+                                if(debug.get(i).getThema().equals("Describe")){
+                                    canDescribe = false;
+                                }
+
+                                if(debug.get(i).getThema().equals("OCR")){
+                                    canOCR = false;
+                                }
+                            }
+
+                            if(canDescribe){
+                                //computer vision describe
+                                doDescribeComputerVision(albumItem.getName(), folderName, mBitmap);
+                            }
+
+                            if(canOCR){
+                                //computer vision OCR
+                                doOCR(albumItem.getName(), folderName, mBitmap);
+                            }
+                        }
                     }
                 });
             }
@@ -225,7 +264,7 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
     private void detect(final Bitmap imageBitmap)
     {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        imageBitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
+        imageBitmap.compress(Bitmap.CompressFormat.JPEG, 50, outputStream);
         ByteArrayInputStream inputStream = new ByteArrayInputStream(outputStream.toByteArray());
         new detectTask().execute(inputStream);
     }
@@ -341,200 +380,8 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
                     new AddFaceTask(mPersonId, mPersonGroupId, mBitmap, mFace).execute();
                     isMatched.put(mFace, true);
                 }
-                new AddPersonTask(mBitmap, mFace).execute();
+                new AddPersonTask(mBitmap, mFace).execute(mPersonGroupId);
             }
-        }
-    }
-
-    //Computer Vision describe
-    public void doDescribeComputerVision(String imageName, String folderName, Bitmap visionImage) {
-//        textView.setText("Describing...");
-        try {
-            new visionDescribeTask(imageName, folderName, visionImage).execute();
-        } catch (Exception e)
-        {
-            Toast.makeText(itemView.getContext(), "Error encountered. Exception is: " + e.toString(), Toast.LENGTH_SHORT).show();
-//            textView.setText("Error encountered. Exception is: " + e.toString());
-        }
-    }
-
-    public void doOCR(String imageName, String folderName, Bitmap visionImage) {
-        try {
-            new visionOCRTask(imageName, folderName, visionImage).execute();
-        } catch (Exception e)
-        {
-            Toast.makeText(itemView.getContext(), "Error encountered. Exception is: " + e.toString(), Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    //computer vision - Describe
-    private class visionDescribeTask extends AsyncTask<String, String, String> {
-        // Store error message
-        private Exception e = null;
-        private Bitmap visionImage;
-        private String imageName;
-        private String folderName;
-
-        public visionDescribeTask(String imageName, String folderName, Bitmap visionImage) {
-            this.visionImage = visionImage;
-            this.imageName = imageName;
-            this.folderName = folderName;
-        }
-
-        @Override
-        protected String doInBackground(String... args) {
-            try {
-                return processDescribe(this.visionImage);
-            } catch (Exception e) {
-                this.e = e;    // Store error
-            }
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(String describeData) {
-            super.onPostExecute(describeData);
-            // Display based on error existence
-//            textView.setText("");
-            if (e != null) {
-//                textView.setText("Error: " + e.getMessage());
-                this.e = null;
-            } else {
-//                Gson gson = new Gson();
-//                String temp= "";
-
-                //result에서 원하는 타이틀을 꺼낼수 있음. ex) metadata, captions
-                //그냥 describeData는 이걸 json 파일이 String으로 저장되어있음.
-//                AnalysisResult result = gson.fromJson(describeData, AnalysisResult.class);
-
-//                for (Caption caption: result.description.captions) {
-//                    temp += "Caption: " + caption.text + ", confidence: " + caption.confidence + "\n";
-//                }
-
-
-                //DB에 넣을 값을 함수로 지정해줌.
-//                setDescribe(describeData);
-                insertToDB(this.imageName, this.folderName, "Describe", describeData);
-            }
-        }
-    }
-
-    //computer vision - OCR
-    private class visionOCRTask extends AsyncTask<String, String, String> {
-        // Store error message
-        private Exception e = null;
-        private Bitmap visionImage;
-        private String imageName;
-        private String folderName;
-
-        public visionOCRTask(String imageName, String folderName, Bitmap visionImage) {
-            this.visionImage = visionImage;
-            this.imageName = imageName;
-            this.folderName = folderName;
-        }
-
-        @Override
-        protected String doInBackground(String... args) {
-            try {
-                return processOCR(this.visionImage);
-            } catch (Exception e) {
-                this.e = e;    // Store error
-            }
-
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(String ocrData) {
-            super.onPostExecute(ocrData);
-
-            if (e != null) {
-//                textView.setText("Error: " + e.getMessage());
-                this.e = null;
-            } else {
-                Gson gson = new Gson();
-
-                OCR r = gson.fromJson(ocrData, OCR.class);
-
-                String ocrResult = "";
-                for (Region reg : r.regions) {
-                    for (Line line : reg.lines) {
-                        for (Word word : line.words) {
-                            ocrResult += word.text + " ";
-                        }
-                        ocrResult += "\n";
-                    }
-                    ocrResult += "\n\n";
-                }
-
-                //DB에 저장할 값을 지정해주는 것
-                //굳이 함수로 안해도 되는데 나중에 디버깅하기 쉬울라고 함.
-//                setOCR(ocrResult);
-
-                insertToDB(this.imageName, this.folderName, "OCR", ocrResult);
-            }
-        }
-    }
-
-    //computer vision Describe process
-    private String processDescribe(Bitmap visionImage) throws VisionServiceException, IOException {
-        Gson gson = new Gson();
-
-        // Put the image into an input stream for detection.
-        ByteArrayOutputStream output = new ByteArrayOutputStream();
-        visionImage.compress(Bitmap.CompressFormat.JPEG, 100, output);
-        ByteArrayInputStream inputStream = new ByteArrayInputStream(output.toByteArray());
-
-        AnalysisResult v = this.visionServiceClient.describe(inputStream, 1);
-
-        String result = gson.toJson(v);
-        Log.d("result", result);
-
-        return result;
-    }
-
-
-    //computer vision OCR process
-    private String processOCR(Bitmap visionImage) throws VisionServiceException, IOException {
-        Gson gson = new Gson();
-
-        // Put the image into an input stream for detection.
-        ByteArrayOutputStream output = new ByteArrayOutputStream();
-        visionImage.compress(Bitmap.CompressFormat.JPEG, 100, output);
-        ByteArrayInputStream inputStream = new ByteArrayInputStream(output.toByteArray());
-
-        OCR ocr;
-        ocr = this.visionServiceClient.recognizeText(inputStream, LanguageCodes.AutoDetect, true);
-
-        String result = gson.toJson(ocr);
-        Log.d("result", result);
-
-        return result;
-    }
-
-    //DB 관련 내용
-    public void insertToDB(String imageName, String folderName, String thema, String dataString){
-        //DB 생성
-        ImageDB db = ImageDB.getDatabase(itemView.getContext());
-
-        //메인쓰레드가 아니라 백그라운드에서 작업이 일어나도록 insertasync함수를 쓴다.
-        //db에 데이터를 보내는거임
-        new InsertAsyncTask(db.imageDataDao()).execute(new ImageData(imageName, folderName, thema, dataString));
-        Toast.makeText(itemView.getContext(), "정보가 저장되었습니다.", Toast.LENGTH_SHORT).show();
-    }
-
-    //메인스레드에서 데이터베이스에 접근할 수 없으므로 AsyncTask를 사용하도록 한다.
-    public static class InsertAsyncTask extends AsyncTask<ImageData, Void, Void> {
-        private ImageDataDao imageDataDao;
-
-        public InsertAsyncTask(ImageDataDao describeDataDao) {
-            this.imageDataDao = describeDataDao;
-        }
-
-        @Override //백그라운드작업(메인스레드 X)
-        protected Void doInBackground(ImageData... imageData) {
-            imageDataDao.insert(imageData[0]);
-            return null;
         }
     }
 
@@ -592,7 +439,7 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
             // Get an instance of face service client to detect faces in image.
             try {
                 ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                mBitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
+                mBitmap.compress(Bitmap.CompressFormat.JPEG, 50, stream);
                 InputStream imageInputStream = new ByteArrayInputStream(stream.toByteArray());
 
                 faceServiceClient.addPersonFaceInLargePersonGroup(
@@ -627,6 +474,195 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
             } catch (Exception e) {
                 publishProgress("get PersonList failed");
             }
+            return null;
+        }
+    }
+
+
+    //Computer Vision describe
+    public void doDescribeComputerVision(String imageName, String folderName, Bitmap visionImage) {
+
+        try {
+            new visionDescribeTask(imageName, folderName, visionImage).execute();
+        } catch (Exception e)
+        {
+            Toast.makeText(itemView.getContext(), "Error encountered. Exception is: " + e.toString(), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    public void doOCR(String imageName, String folderName, Bitmap visionImage) {
+        try {
+            new visionOCRTask(imageName, folderName, visionImage).execute();
+        } catch (Exception e)
+        {
+            Toast.makeText(itemView.getContext(), "Error encountered. Exception is: " + e.toString(), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    //computer vision - Describe
+    private class visionDescribeTask extends AsyncTask<String, String, String> {
+        // Store error message
+        private Exception e = null;
+        private Bitmap visionImage;
+        private String imageName;
+        private String folderName;
+
+        public visionDescribeTask(String imageName, String folderName, Bitmap visionImage) {
+            this.visionImage = visionImage;
+            this.imageName = imageName;
+            this.folderName = folderName;
+        }
+
+        @Override
+        protected String doInBackground(String... args) {
+            try {
+                return processDescribe(this.visionImage);
+            } catch (Exception e) {
+                this.e = e;    // Store error
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(String describeData) {
+            super.onPostExecute(describeData);
+
+            if (e != null) {
+                this.e = null;
+                Toast.makeText(itemView.getContext(), "onPostExecute Error: Describe", Toast.LENGTH_SHORT).show();
+            } else {
+                //DB에 데이터 저장
+                try {
+                    insertToDB(this.imageName, this.folderName, "Describe", describeData);
+                } catch (JSONException ex) {
+                    ex.printStackTrace();
+                }
+            }
+        }
+    }
+
+    //computer vision - OCR
+    private class visionOCRTask extends AsyncTask<String, String, String> {
+        // Store error message
+        private Exception e = null;
+        private Bitmap visionImage;
+        private String imageName;
+        private String folderName;
+
+        public visionOCRTask(String imageName, String folderName, Bitmap visionImage) {
+            this.visionImage = visionImage;
+            this.imageName = imageName;
+            this.folderName = folderName;
+        }
+
+        @Override
+        protected String doInBackground(String... args) {
+            try {
+                return processOCR(this.visionImage);
+            } catch (Exception e) {
+                this.e = e;    // Store error
+            }
+
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(String ocrData) {
+            super.onPostExecute(ocrData);
+
+            if (e != null) {
+                this.e = null;
+                Toast.makeText(itemView.getContext(), "onPostExecute Error: OCR", Toast.LENGTH_SHORT).show();
+            } else {
+                Gson gson = new Gson();
+
+                OCR r = gson.fromJson(ocrData, OCR.class);
+
+                String ocrResult = "";
+                for (Region reg : r.regions) {
+                    for (Line line : reg.lines) {
+                        for (Word word : line.words) {
+                            ocrResult += word.text + " ";
+                        }
+                        ocrResult += "\n";
+                    }
+                    ocrResult += "\n\n";
+                }
+
+                try {
+                    insertToDB(this.imageName, this.folderName, "OCR", ocrResult);
+                } catch (JSONException ex) {
+                    ex.printStackTrace();
+                }
+            }
+        }
+    }
+
+    //computer vision Describe process
+    private String processDescribe(Bitmap visionImage) throws VisionServiceException, IOException {
+        Gson gson = new Gson();
+
+        // Put the image into an input stream for detection.
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        visionImage.compress(Bitmap.CompressFormat.JPEG, 50, output);
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(output.toByteArray());
+
+        AnalysisResult v = this.visionServiceClient.describe(inputStream, 1);
+
+        String result = gson.toJson(v);
+        Log.d("result", result);
+
+        return result;
+    }
+
+
+    //computer vision OCR process
+    private String processOCR(Bitmap visionImage) throws VisionServiceException, IOException {
+        Gson gson = new Gson();
+
+        // Put the image into an input stream for detection.
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        visionImage.compress(Bitmap.CompressFormat.JPEG, 50, output);
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(output.toByteArray());
+
+        OCR ocr;
+        ocr = this.visionServiceClient.recognizeText(inputStream, LanguageCodes.AutoDetect, true);
+
+        String result = gson.toJson(ocr);
+        Log.d("result", result);
+
+        return result;
+    }
+
+    //DB 관련 내용
+    public void insertToDB(String imageName, String folderName, String thema, String dataString) throws JSONException {
+        //DB 생성
+        ImageDB db = ImageDB.getDatabase(itemView.getContext());
+
+        //메인쓰레드가 아니라 백그라운드에서 작업이 일어나도록 insertasync함수를 쓴다.
+        //db에 데이터를 보내는거임
+        ImageData imageData = new ImageData(imageName, folderName, thema, dataString);
+
+//        //DB에 넣을 것이 describe이면 tags를 설정해준다.
+//        if(imageData.getThema().equals("Describe")){
+//            imageData.setDescribe_tagsByDataString(dataString);
+//        }
+
+        new InsertAsyncTask(db.imageDataDao()).execute(imageData);
+        Toast.makeText(itemView.getContext(), "정보가 저장되었습니다.", Toast.LENGTH_SHORT).show();
+    }
+
+    //메인스레드에서 데이터베이스에 접근할 수 없으므로 AsyncTask를 사용하도록 한다.
+    public static class InsertAsyncTask extends AsyncTask<ImageData, Void, Void> {
+        private ImageDataDao imageDataDao;
+
+        public InsertAsyncTask(ImageDataDao describeDataDao) {
+            this.imageDataDao = describeDataDao;
+        }
+
+        @Override //백그라운드작업(메인스레드 X)
+        protected Void doInBackground(ImageData... imageData) {
+            imageDataDao.insert(imageData[0]);
             return null;
         }
     }

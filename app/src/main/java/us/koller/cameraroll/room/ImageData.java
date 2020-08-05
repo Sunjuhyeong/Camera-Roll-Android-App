@@ -4,6 +4,11 @@ import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
+import com.google.gson.JsonArray;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+
 @Entity
 public class ImageData {
     @PrimaryKey(autoGenerate = true)
@@ -15,6 +20,8 @@ public class ImageData {
     public String dataString;
     //thema는 "Describe"와 "OCR"이 존재
     public String thema;
+//    //thema가 Describe인 경우만 존재
+//    public String describe_tags;
 
     public ImageData(String image_ID, String folderName, String thema, String dataString){
         this.image_ID = image_ID;
@@ -63,7 +70,30 @@ public class ImageData {
         this.thema = thema;
     }
 
-        @Override
+//    public String getDescribe_tags() {
+//        return describe_tags;
+//    }
+//
+//    public void setDescribe_tags(String describe_tags) {
+//        this.describe_tags = describe_tags;
+//    }
+//
+//    //thema가 describe라면
+//    public void setDescribe_tagsByDataString(String dataString) throws JSONException {
+//        JSONArray jsonArray = new JSONArray(dataString);
+//
+//        if(jsonArray.length()>0){
+//            String tagsString = jsonArray.getJSONObject(0)
+//                    .getJSONObject("description")
+//                    .getString("tags")
+//                    .replace("[", "")
+//                    .replace("]","");
+//
+//            this.describe_tags = tagsString;
+//        }
+//    }
+
+    @Override
     public String toString() {
         return "Data ID: " + this.ID + "\n\n"
                 + "IMAGE NAME: " + this.image_ID + "\n\n"
