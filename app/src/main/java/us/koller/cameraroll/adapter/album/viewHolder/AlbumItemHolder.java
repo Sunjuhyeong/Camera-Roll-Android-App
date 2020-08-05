@@ -169,57 +169,57 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
                         boolean canDescribe = true;
                         boolean canOCR = true;
                         boolean canFace = true;
-
-                        // /를 기준으로 폴더명을 따로 파싱할거임
-//                        String [] getFolderName = albumItem.getPath().split("/");
-                        // 끝에서 두번째가 폴더명임.
-//                        String folderName = getFolderName[getFolderName.length -2];
-                        String folderName = albumItem.getPath();
-                        //DB 생성
-                        ImageDB db = ImageDB.getDatabase(itemView.getContext());
-
-                        List<ImageData> debug = db.imageDataDao().findByImage_ID(albumItem.getName());
-
-                        //image파일을 처음보는 경우
-                        if(debug.size() == 0){
-                            //computer vision describe
-                            doDescribeComputerVision(albumItem.getName(), folderName, resource.copy(resource.getConfig(), false));
-
-                            //computer vision OCR
-                            doOCR(albumItem.getName(), folderName, resource.copy(resource.getConfig(), false));
-
-                            //detect face
-                            detect(albumItem.getName(), folderName, mBitmap);
-                        } else{
-                            for(int i=0; i<debug.size(); i++){
-                                if(debug.get(i).getThema().equals("Describe")){
-                                    canDescribe = false;
-                                }
-
-                                if(debug.get(i).getThema().equals("OCR")){
-                                    canOCR = false;
-                                }
-
-                                if(debug.get(i).getThema().equals("Face_mPersonID")){
-                                    canFace = false;
-                                }
-                            }
-
-                            if(canDescribe){
-                                //computer vision describe
-                                doDescribeComputerVision(albumItem.getName(), folderName, mBitmap);
-                            }
-
-                            if(canOCR){
-                                //computer vision OCR
-                                doOCR(albumItem.getName(), folderName, mBitmap);
-                            }
-
-                            if(canFace){
-                                //detect face
-                                detect(albumItem.getName(), folderName, mBitmap);
-                            }
-                        }
+//
+//                        // /를 기준으로 폴더명을 따로 파싱할거임
+////                        String [] getFolderName = albumItem.getPath().split("/");
+//                        // 끝에서 두번째가 폴더명임.
+////                        String folderName = getFolderName[getFolderName.length -2];
+//                        String folderName = albumItem.getPath();
+//                        //DB 생성
+//                        ImageDB db = ImageDB.getDatabase(itemView.getContext());
+//
+//                        List<ImageData> debug = db.imageDataDao().findByImage_ID(albumItem.getName());
+//
+//                        //image파일을 처음보는 경우
+//                        if(debug.size() == 0){
+//                            //computer vision describe
+//                            doDescribeComputerVision(albumItem.getName(), folderName, resource.copy(resource.getConfig(), false));
+//
+//                            //computer vision OCR
+//                            doOCR(albumItem.getName(), folderName, resource.copy(resource.getConfig(), false));
+//
+//                            //detect face
+//                            detect(albumItem.getName(), folderName, mBitmap);
+//                        } else{
+//                            for(int i=0; i<debug.size(); i++){
+//                                if(debug.get(i).getThema().equals("Describe")){
+//                                    canDescribe = false;
+//                                }
+//
+//                                if(debug.get(i).getThema().equals("OCR")){
+//                                    canOCR = false;
+//                                }
+//
+//                                if(debug.get(i).getThema().equals("Face_mPersonID")){
+//                                    canFace = false;
+//                                }
+//                            }
+//
+//                            if(canDescribe){
+//                                //computer vision describe
+//                                doDescribeComputerVision(albumItem.getName(), folderName, mBitmap);
+//                            }
+//
+//                            if(canOCR){
+//                                //computer vision OCR
+//                                doOCR(albumItem.getName(), folderName, mBitmap);
+//                            }
+//
+//                            if(canFace){
+//                                //detect face
+//                                detect(albumItem.getName(), folderName, mBitmap);
+//                            }
+//                        }
                     }
                 });
             }
@@ -491,7 +491,6 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
         @Override
         protected void onPostExecute(Boolean aBoolean) {
             if (aBoolean){
-                //todo: DB에 mPersonId 저장
                 try {
                     insertToDB(this.imageName, this.folderName, "Face_mPersonID", mPersonId.toString());
                     insertToDB(this.imageName, this.folderName, "Face_mFace_height", Integer.toString(mFace.faceRectangle.height));

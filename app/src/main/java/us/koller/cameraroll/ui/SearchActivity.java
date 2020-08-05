@@ -3,15 +3,24 @@ package us.koller.cameraroll.ui;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.drawable.AnimatedVectorDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.GridView;
+import android.widget.SearchView;
 
-import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityOptionsCompat;
+import androidx.core.content.ContextCompat;
+import androidx.core.graphics.drawable.DrawableCompat;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.SimpleTarget;
@@ -33,25 +42,50 @@ import us.koller.cameraroll.data.models.AlbumItem;
 import us.koller.cameraroll.room.ImageDB;
 import us.koller.cameraroll.room.ImageData;
 
-public class SearchActivity extends AppCompatActivity {
+public class SearchActivity extends ThemeableActivity {
 
     private int AlbumCode = 39;
     private static final double FACE_RECT_SCALE_RATIO = 1.3;
-    private String sub_key_face = null;
-    private final String endpoint_face = "https://westus.api.cognitive.microsoft.com/face/v1.0/";
     private String mPersonGroupId;
     private FaceServiceClient faceServiceClient;
     private SearchAdapter adapter;
     private GridView gv;
     private File file;
+    private String searchResult;
+    private Menu menu;
+    MenuItem mSearch;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_search);
-        sub_key_face = getResources().getString(R.string.subscription_key_face);
+
+        final Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        ActionBar actionBar = getSupportActionBar();
+
+        AnimatedVectorDrawable drawable = (AnimatedVectorDrawable)
+                ContextCompat.getDrawable(SearchActivity.this, R.drawable.back_to_cancel_avd);
+        //mutating avd to reset it
+        drawable.mutate();
+        toolbar.setNavigationIcon(drawable);
+        Drawable navIcon = toolbar.getNavigationIcon();
+        if (navIcon != null) {
+            navIcon = DrawableCompat.wrap(navIcon);
+            DrawableCompat.setTint(navIcon.mutate(), textColorSecondary);
+            toolbar.setNavigationIcon(navIcon);
+        }
+        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                onBackPressed();
+            }
+        });
+
+        String sub_key_face = getResources().getString(R.string.subscription_key_face);
+        String endpoint_face = "https://westus.api.cognitive.microsoft.com/face/v1.0/";
         faceServiceClient = new FaceServiceRestClient(endpoint_face, sub_key_face);
-        String searchResult = "search";
+        searchResult = "search";
         ArrayList<String> checkId = new ArrayList<>();
         ArrayList<AlbumItem> albumItemList = new ArrayList<>();
 
@@ -95,7 +129,75 @@ public class SearchActivity extends AppCompatActivity {
         adapter = new SearchAdapter();
         gv = (GridView)findViewById(R.id.faceGridView);
 
-        new getPersonListTask().execute();
+//        new getPersonListTask().execute();
+        return;
+    }
+
+    @Override
+    public int getDarkThemeRes() {
+        return 0;
+    }
+
+    @Override
+    public int getLightThemeRes() {
+        return 0;
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        super.onCreateOptionsMenu(menu);
+
+        //search_menu.xml 등록
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.search_menu, menu);
+        this.menu = menu;
+
+        MenuItem mSearch = menu.findItem(R.id.search);
+        mSearch.setVisible(true);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected (MenuItem item){
+        if(item.getItemId() == R.id.search) {
+            //메뉴 아이콘 클릭했을 시 확장, 취소했을 시 축소
+            item.setOnActionExpandListener(new MenuItem.OnActionExpandListener() {
+                @Override
+                public boolean onMenuItemActionExpand(MenuItem item) {
+                    return true;
+                }
+
+                @Override
+                public boolean onMenuItemActionCollapse(MenuItem item) {
+                    return true;
+                }
+            });
+
+            //menuItem을 이용해서 SearchView 변수 생성
+            SearchView sv = (SearchView) item.getActionView();
+
+            //확인버튼 활성화
+            sv.setSubmitButtonEnabled(true);
+
+            //SearchView의 검색 이벤트
+            sv.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+
+                //검색버튼을 눌렀을 경우
+                @Override
+                public boolean onQueryTextSubmit(String query) {
+                    searchResult = query;
+                    //todo: 검색 시작
+                    return true;
+                }
+
+                //텍스트가 바뀔때마다 호출
+                @Override
+                public boolean onQueryTextChange(String newText) {
+                    return true;
+                }
+            });
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     private class getPersonListTask extends AsyncTask<Void,String, Person[]> {
@@ -144,7 +246,7 @@ public class SearchActivity extends AppCompatActivity {
                     album.setCached(true);
                     file = new File(getApplicationContext().getFilesDir(), "cache"+ targetId);
                     album.setPath(file.getPath());
-                    startAlbumActivity(album);
+//                    startAlbumActivity(album);
 
 
                 }
