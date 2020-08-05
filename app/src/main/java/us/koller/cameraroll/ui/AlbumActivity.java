@@ -598,6 +598,7 @@ public class AlbumActivity extends ThemeableActivity
                 }).show();
                 break;
             case R.id.sort_by_date:
+
             case R.id.sort_by_name:
                 item.setChecked(true);
 
