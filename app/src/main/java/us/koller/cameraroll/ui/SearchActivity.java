@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.GridView;
@@ -22,10 +23,12 @@ import com.microsoft.projectoxford.face.contract.Person;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 
 import us.koller.cameraroll.R;
 import us.koller.cameraroll.adapter.SearchAdapter;
 import us.koller.cameraroll.data.models.Album;
+import us.koller.cameraroll.data.models.AlbumItem;
 
 public class SearchActivity extends AppCompatActivity {
 
@@ -50,34 +53,6 @@ public class SearchActivity extends AppCompatActivity {
 
         new getPersonListTask().execute();
     }
-
-    private void startAlbumActivity(Album album) {
-        Intent intent = new Intent(getApplicationContext(), AlbumActivity.class);
-        intent.putExtra(AlbumActivity.ALBUM_PATH, album.getPath());
-
-        ActivityOptionsCompat options;
-
-        //noinspection unchecked
-        options = ActivityOptionsCompat.makeSceneTransitionAnimation((Activity) this);
-        startActivityForResult(intent,
-                AlbumCode, options.toBundle());
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == AlbumCode) {
-            if (resultCode != RESULT_CANCELED) {
-                setResult(RESULT_OK, data);
-            }
-            if(file.delete())
-                this.finish();
-            else{
-                //todo: something wrong
-            }
-        }
-    }
-
 
     private class getPersonListTask extends AsyncTask<Void,String, Person[]> {
 
@@ -105,7 +80,7 @@ public class SearchActivity extends AppCompatActivity {
             }
             for (Person person : personList) {
                 try {
-                    Bitmap thumbnail = getFaceThumbNail(person);
+                    Bitmap thumbnail = getFaceThumbnail(person);
                     adapter.addItem(thumbnail);
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -117,21 +92,21 @@ public class SearchActivity extends AppCompatActivity {
                 public void onItemClick(AdapterView<?> parent, View view,
                                         int position, long id) {
                     Album album = new Album().setPath("");
+                    ArrayList<AlbumItem> albumItems = new ArrayList<>();
 
                     //todo : Make Album of selected person
+
                     album.setCached(true);
                     file = new File(getApplicationContext().getFilesDir(), "cache"+ personList[position].personId.toString());
                     album.setPath(file.getPath());
-
                     startAlbumActivity(album);
-
 
                 }
             });
         }
     }
 
-    private Bitmap getFaceThumbNail(Person person) throws IOException {
+    private Bitmap getFaceThumbnail(Person person) throws IOException {
         String personID = person.personId.toString();
         FaceRectangle faceRectangle = null;
         Bitmap bitmap = null;
@@ -160,6 +135,31 @@ public class SearchActivity extends AppCompatActivity {
         return bitmap[0];
     }
 
+    private void startAlbumActivity(Album album) {
+        Intent intent = new Intent(getApplicationContext(), AlbumActivity.class);
+        intent.putExtra(AlbumActivity.ALBUM_PATH, album.getPath());
+
+        ActivityOptionsCompat options;
+
+        //noinspection unchecked
+        options = ActivityOptionsCompat.makeSceneTransitionAnimation((Activity) this);
+        startActivityForResult(intent,
+                AlbumCode, options.toBundle());
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == AlbumCode) {
+            if (resultCode != RESULT_CANCELED) {
+                setResult(RESULT_OK, data);
+            }
+            if(file.delete())
+                this.finish();
+            else
+                Log.d("MyTag", "wrong file deleted in searchActivity");
+        }
+    }
 
     public static class ImageHelper {
         // Resize face rectangle, for better view for human
