@@ -27,10 +27,10 @@ public class PersonGroupActivity extends AppCompatActivity {
         new InitPersonGroupTask().execute();
     }
 
-    private class InitPersonGroupTask extends AsyncTask<String, String, LargePersonGroup[]> {
+    private class InitPersonGroupTask extends AsyncTask<Void, String, LargePersonGroup[]> {
 
         @Override
-        protected LargePersonGroup[] doInBackground(String... params) {
+        protected LargePersonGroup[] doInBackground(Void... params) {
 
             try{
                 // get a list of LargePersonGroups
@@ -46,15 +46,16 @@ public class PersonGroupActivity extends AppCompatActivity {
             if (result != null) {
                 mPersonGroupId = result[0].largePersonGroupId;
             }
-            else {//todo 이게 실제로 작동하지는 않는듯
+            else {
                 try {
                     faceServiceClient.createLargePersonGroup(
                         "madcamp3", //group Id
                         "People", //group Name
-                        null); //group description
+                        "GroupData"); //group description
+                    new InitPersonGroupTask().execute();
                 }
                 catch (Exception e) {
-                    publishProgress(e.getMessage());
+                    e.printStackTrace();
                 }
             }
             Intent intent = new Intent();

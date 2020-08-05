@@ -344,7 +344,7 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
                 Person[] result = faceServiceClient.listPersonsInLargePersonGroup(mPersonGroupId);
                 if (result == null)
                 {
-                    //todo create person when no person
+                    new AddPersonTask(this.imageName, this.folderName, mBitmap, mFace).execute(mPersonGroupId);
                     return null;
                 }
                 return result;

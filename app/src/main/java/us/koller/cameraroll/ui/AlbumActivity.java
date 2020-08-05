@@ -635,7 +635,7 @@ public class AlbumActivity extends ThemeableActivity
             }
         }
         else if (requestCode == SearchCode){
-            //todo implementation
+            //todo: implementation
         }
         else{ //default
             if (data != null && data.getAction() != null) {

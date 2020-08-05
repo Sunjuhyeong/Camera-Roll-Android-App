@@ -12,7 +12,6 @@ import android.widget.GridView;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityOptionsCompat;
-import androidx.core.util.Pools;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.SimpleTarget;
@@ -25,16 +24,14 @@ import com.microsoft.projectoxford.face.contract.Person;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-
-import java.util.ArrayList;
 import java.util.List;
+
 import us.koller.cameraroll.R;
 import us.koller.cameraroll.adapter.SearchAdapter;
 import us.koller.cameraroll.data.models.Album;
 import us.koller.cameraroll.data.models.AlbumItem;
 import us.koller.cameraroll.room.ImageDB;
 import us.koller.cameraroll.room.ImageData;
-import us.koller.cameraroll.data.models.AlbumItem;
 
 public class SearchActivity extends AppCompatActivity {
 
@@ -110,7 +107,6 @@ public class SearchActivity extends AppCompatActivity {
                 Person[] result = faceServiceClient.listPersonsInLargePersonGroup(mPersonGroupId);
                 if (result == null)
                 {
-                    //todo: create person when no person
                     return null;
                 }
                 return result;
@@ -140,11 +136,13 @@ public class SearchActivity extends AppCompatActivity {
                                         int position, long id) {
                     Album album = new Album().setPath("");
                     ArrayList<AlbumItem> albumItems = new ArrayList<>();
+                    String targetId = personList[position].personId.toString();
 
                     //todo : Make Album of selected person
 
+
                     album.setCached(true);
-                    file = new File(getApplicationContext().getFilesDir(), "cache"+ personList[position].personId.toString());
+                    file = new File(getApplicationContext().getFilesDir(), "cache"+ targetId);
                     album.setPath(file.getPath());
                     startAlbumActivity(album);
 
