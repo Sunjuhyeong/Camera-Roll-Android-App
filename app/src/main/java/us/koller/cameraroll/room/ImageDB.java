@@ -6,7 +6,7 @@ import androidx.room.Database;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
 
-@Database(entities = {ImageData.class}, version = 3, exportSchema = true)
+@Database(entities = {ImageData.class}, version = 5, exportSchema = true)
 public abstract class ImageDB extends RoomDatabase {
     public abstract ImageDataDao imageDataDao();
     private static ImageDB INSTANCE;
@@ -17,7 +17,7 @@ public abstract class ImageDB extends RoomDatabase {
                 if(INSTANCE == null){
                     INSTANCE = Room.databaseBuilder(context.getApplicationContext(),
                             ImageDB.class,
-                            "imagesInformation-db3")
+                            "imagesInformation-db5")
                             .allowMainThreadQueries()
                             .fallbackToDestructiveMigration()
                             .build();

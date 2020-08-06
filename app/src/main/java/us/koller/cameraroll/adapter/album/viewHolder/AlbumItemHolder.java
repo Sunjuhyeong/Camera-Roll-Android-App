@@ -169,57 +169,57 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
                         boolean canDescribe = true;
                         boolean canOCR = true;
                         boolean canFace = true;
-//
-//                        // /를 기준으로 폴더명을 따로 파싱할거임
-////                        String [] getFolderName = albumItem.getPath().split("/");
-//                        // 끝에서 두번째가 폴더명임.
-////                        String folderName = getFolderName[getFolderName.length -2];
-//                        String folderName = albumItem.getPath();
-//                        //DB 생성
-//                        ImageDB db = ImageDB.getDatabase(itemView.getContext());
-//
-//                        List<ImageData> debug = db.imageDataDao().findByImage_ID(albumItem.getName());
-//
-//                        //image파일을 처음보는 경우
-//                        if(debug.size() == 0){
-//                            //computer vision describe
-//                            doDescribeComputerVision(albumItem.getName(), folderName, resource.copy(resource.getConfig(), false));
-//
-//                            //computer vision OCR
-//                            doOCR(albumItem.getName(), folderName, resource.copy(resource.getConfig(), false));
-//
-//                            //detect face
-//                            detect(albumItem.getName(), folderName, mBitmap);
-//                        } else{
-//                            for(int i=0; i<debug.size(); i++){
-//                                if(debug.get(i).getThema().equals("Describe")){
-//                                    canDescribe = false;
-//                                }
-//
-//                                if(debug.get(i).getThema().equals("OCR")){
-//                                    canOCR = false;
-//                                }
-//
-//                                if(debug.get(i).getThema().equals("Face_mPersonID")){
-//                                    canFace = false;
-//                                }
-//                            }
-//
-//                            if(canDescribe){
-//                                //computer vision describe
-//                                doDescribeComputerVision(albumItem.getName(), folderName, mBitmap);
-//                            }
-//
-//                            if(canOCR){
-//                                //computer vision OCR
-//                                doOCR(albumItem.getName(), folderName, mBitmap);
-//                            }
-//
-//                            if(canFace){
-//                                //detect face
-//                                detect(albumItem.getName(), folderName, mBitmap);
-//                            }
-//                        }
+
+                        // /를 기준으로 폴더명을 따로 파싱할거임
+//                        String [] getFolderName = albumItem.getPath().split("/");
+                        // 끝에서 두번째가 폴더명임.
+//                        String folderName = getFolderName[getFolderName.length -2];
+                        String folderName = albumItem.getPath();
+                        //DB 생성
+                        ImageDB db = ImageDB.getDatabase(itemView.getContext());
+
+                        List<ImageData> debug = db.imageDataDao().findByImage_ID(albumItem.getName());
+
+                        //image파일을 처음보는 경우
+                        if(debug.size() == 0){
+                            //computer vision describe
+                            doDescribeComputerVision(albumItem.getName(), folderName, resource.copy(resource.getConfig(), false));
+
+                            //computer vision OCR
+                            doOCR(albumItem.getName(), folderName, resource.copy(resource.getConfig(), false));
+
+                            //detect face
+                            detect(albumItem.getName(), folderName, mBitmap);
+                        } else{
+                            for(int i=0; i<debug.size(); i++){
+                                if(debug.get(i).getThema().equals("Describe")){
+                                    canDescribe = false;
+                                }
+
+                                if(debug.get(i).getThema().equals("OCR")){
+                                    canOCR = false;
+                                }
+
+                                if(debug.get(i).getThema().equals("Face_mPersonID")){
+                                    canFace = false;
+                                }
+                            }
+
+                            if(canDescribe){
+                                //computer vision describe
+                                doDescribeComputerVision(albumItem.getName(), folderName, mBitmap);
+                            }
+
+                            if(canOCR){
+                                //computer vision OCR
+                                doOCR(albumItem.getName(), folderName, mBitmap);
+                            }
+
+                            if(canFace){
+                                //detect face
+                                detect(albumItem.getName(), folderName, mBitmap);
+                            }
+                        }
                     }
                 });
             }
@@ -344,7 +344,7 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
                 Person[] result = faceServiceClient.listPersonsInLargePersonGroup(mPersonGroupId);
                 if (result == null)
                 {
-                    new AddPersonTask(this.imageName, this.folderName, mBitmap, mFace).execute(mPersonGroupId);
+//                    new AddPersonTask(this.imageName, this.folderName, mBitmap, mFace).execute(mPersonGroupId);
                     return null;
                 }
                 return result;
@@ -690,7 +690,7 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
         ImageData imageData = new ImageData(imageName, folderName, thema, dataString);
 
         new InsertAsyncTask(db.imageDataDao()).execute(imageData);
-        Toast.makeText(itemView.getContext(), "정보가 저장되었습니다.", Toast.LENGTH_SHORT).show();
+        Toast.makeText(itemView.getContext(), thema + ": 정보가 저장되었습니다.", Toast.LENGTH_SHORT).show();
     }
 
     //메인스레드에서 데이터베이스에 접근할 수 없으므로 AsyncTask를 사용하도록 한다.
