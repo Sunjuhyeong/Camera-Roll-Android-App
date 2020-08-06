@@ -130,13 +130,19 @@ public class AlbumActivity extends ThemeableActivity
     private boolean pick_photos;
     private boolean allowMultiple;
 
+
     private String mPersonGroupId;
     private int PersonGroupCode = 13;
     private int SearchCode = 26;
+    private String from;
+    private Album albumFromSearch;
     @Override
     protected void onCreate(@Nullable final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_album);
+        Intent visionAlbumIntent = getIntent();
+        albumFromSearch = (Album) visionAlbumIntent.getSerializableExtra("albumFromSearch");
+        from = visionAlbumIntent.getStringExtra("from");
 
         Intent intent = new Intent(getApplicationContext() , PersonGroupActivity.class);
         ActivityCompat.startActivityForResult(this, intent, PersonGroupCode, null);
@@ -205,6 +211,7 @@ public class AlbumActivity extends ThemeableActivity
                 }
             }
         });
+
         //Init PersonGroup
         recyclerView = findViewById(R.id.recyclerView);
         final int columnCount = Settings.getInstance(this).getColumnCount(this);
@@ -364,14 +371,44 @@ public class AlbumActivity extends ThemeableActivity
         } else {
             path = getIntent().getStringExtra(ALBUM_PATH);
         }
-        MediaProvider.loadAlbum(this, path,
-                new MediaProvider.OnAlbumLoadedCallback() {
-                    @Override
-                    public void onAlbumLoaded(Album album) {
-                        AlbumActivity.this.album = album;
-                        AlbumActivity.this.onAlbumLoaded(savedInstanceState);
-                    }
-                });
+        if(from == null) {
+            MediaProvider.loadAlbum(this, path,
+                    new MediaProvider.OnAlbumLoadedCallback() {
+                        @Override
+                        public void onAlbumLoaded(Album album) {
+                            AlbumActivity.this.album = album;
+                            AlbumActivity.this.onAlbumLoaded(savedInstanceState);
+                        }
+                    });
+        } else{
+            Activity activity = AlbumActivity.this;
+            new MediaProvider(activity).loadAlbums(activity, false,
+                    new MediaProvider.OnMediaLoadedCallback() {
+                        @Override
+                        public void onMediaLoaded(ArrayList<Album> albums) {
+                            //reload activity
+                            MediaProvider.loadAlbum(activity, path,
+                                    new MediaProvider.OnAlbumLoadedCallback() {
+                                        @Override
+                                        public void onAlbumLoaded(Album album) {
+                                            AlbumActivity.this.album = album;
+                                            AlbumActivity.this.onAlbumLoaded(null);
+                                        }
+                                    });
+                        }
+
+                        @Override
+                        public void timeout() {
+                            finish();
+                        }
+
+                        @Override
+                        public void needPermission() {
+                            finish();
+                        }
+                    });
+
+        }
 
     }
 
