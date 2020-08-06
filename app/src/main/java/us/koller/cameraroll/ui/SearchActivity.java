@@ -64,11 +64,14 @@ public class SearchActivity extends ThemeableActivity {
     private int VisionAlbumCode = 50;
     private int SearchResultCode = 60;
     File file;
+    private Album album;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_search);
+
+        album = (Album) getIntent().getSerializableExtra("album");
 
         toolbarSetting();
 
@@ -134,6 +137,7 @@ public class SearchActivity extends ThemeableActivity {
                     searchResult = query;
                     Intent intent = new Intent(SearchActivity.this.getApplicationContext(), SearchResultActivity.class);
                     intent.putExtra("keyword", searchResult);
+                    intent.putExtra("album", (Serializable) album);
                     ActivityOptionsCompat options;
                     options = ActivityOptionsCompat.makeSceneTransitionAnimation(SearchActivity.this);
                     startActivityForResult(intent,
@@ -213,6 +217,7 @@ public class SearchActivity extends ThemeableActivity {
                     String targetId = personList[position].personId.toString();
                     Intent intent = new Intent(SearchActivity.this.getApplicationContext(), SearchResultActivity.class);
                     intent.putExtra("mPersonID", targetId);
+                    intent.putExtra("album", (Serializable) album);
                     ActivityOptionsCompat options;
                     options = ActivityOptionsCompat.makeSceneTransitionAnimation(SearchActivity.this);
                     startActivityForResult(intent,

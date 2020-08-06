@@ -34,6 +34,8 @@ import java.util.Objects;
 import us.koller.cameraroll.R;
 import us.koller.cameraroll.adapter.SearchResultAdapter;
 import us.koller.cameraroll.data.Settings;
+import us.koller.cameraroll.data.models.Album;
+import us.koller.cameraroll.data.models.AlbumItem;
 import us.koller.cameraroll.room.ImageDB;
 import us.koller.cameraroll.room.ImageData;
 
@@ -55,6 +57,7 @@ public class SearchResultActivity extends ThemeableActivity {
     private ArrayList<Bitmap> bitmapArrayList = new ArrayList<>();
     private ArrayList<String> pathList = new ArrayList<>();
     private ArrayList<String> checkList = new ArrayList<>();
+    private Album album;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,6 +67,7 @@ public class SearchResultActivity extends ThemeableActivity {
         String searchResult = getIntent().getStringExtra("keyword");
         toolbarSetting().setTitle(searchResult);
         mPersonId = getIntent().getStringExtra("mPersonID");
+        album = (Album) getIntent().getSerializableExtra("album");
 
         //DB 생성
         ImageDB db = ImageDB.getDatabase(this);
@@ -92,11 +96,12 @@ public class SearchResultActivity extends ThemeableActivity {
             @Override
             public void onItemClick(AdapterView<?> parent, View view,
                                     int position, long id) {
+                AlbumItem albumItem = album.getAlbumItems().get(position);
 
                 Intent intent = new Intent(SearchResultActivity.this, ItemActivity.class);
                 intent.putExtra(ItemActivity.ALBUM_ITEM, albumItem);
-                intent.putExtra(ItemActivity.ALBUM_PATH, getData().getPath());
-                intent.putExtra(ItemActivity.ITEM_POSITION, getData().getAlbumItems().indexOf(albumItem));
+                intent.putExtra(ItemActivity.ALBUM_PATH, album.getPath());
+                intent.putExtra(ItemActivity.ITEM_POSITION, album.getAlbumItems().indexOf(albumItem));
 
                 if (Settings.getInstance(SearchResultActivity.this).showAnimations()) {
                     ActivityOptionsCompat options =
