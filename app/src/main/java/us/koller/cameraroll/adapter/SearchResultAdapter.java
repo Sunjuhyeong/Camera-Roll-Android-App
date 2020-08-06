@@ -46,27 +46,17 @@ public class SearchResultAdapter extends BaseAdapter {
     public View getView(int i, View view, ViewGroup viewGroup) {
         if (view == null) {
             viewHolder = new SearchResultAdapter.ViewHolder();
-            view = inflater.inflate(R.layout.item_face, null);
-            viewHolder.imageView = view.findViewById(R.id.faceThumbnail);
+            view = inflater.inflate(R.layout.item_result, null);
+            viewHolder.imageView = view.findViewById(R.id.resultimageview);
             view.setTag(viewHolder);
-        }else {
+        } else {
             viewHolder = (SearchResultAdapter.ViewHolder)view.getTag();
         }
 
         viewHolder.imageView.setTag(i);
         viewHolder.imageView.setImageBitmap(mItems.get(i));
-//        viewHolder.imageView.setOnClickListener(buttonClickListener);
         return view;
     }
-
-    private View.OnClickListener buttonClickListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            if (v.getId() == R.id.imageView) {
-
-            }
-        }
-    };
 
     static class ViewHolder {
         public ImageView imageView = null;

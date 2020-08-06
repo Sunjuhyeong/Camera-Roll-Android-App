@@ -1,10 +1,6 @@
 package us.koller.cameraroll.ui;
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
-import androidx.core.content.ContextCompat;
-import androidx.core.graphics.drawable.DrawableCompat;
-
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
@@ -15,6 +11,12 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.GridView;
+
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
+import androidx.core.app.ActivityOptionsCompat;
+import androidx.core.content.ContextCompat;
+import androidx.core.graphics.drawable.DrawableCompat;
 
 import com.microsoft.projectoxford.face.FaceServiceClient;
 import com.microsoft.projectoxford.face.contract.FaceRectangle;
@@ -27,6 +29,7 @@ import java.util.Objects;
 
 import us.koller.cameraroll.R;
 import us.koller.cameraroll.adapter.SearchResultAdapter;
+import us.koller.cameraroll.data.Settings;
 import us.koller.cameraroll.room.ImageDB;
 import us.koller.cameraroll.room.ImageData;
 
@@ -52,8 +55,7 @@ public class SearchResultActivity extends ThemeableActivity {
         setContentView(R.layout.activity_search_result);
 
         String searchResult = getIntent().getStringExtra("keyword");
-        toolbarSetting();
-
+        toolbarSetting().setTitle(searchResult);
         //DB 생성
         ImageDB db = ImageDB.getDatabase(this);
 
@@ -65,15 +67,29 @@ public class SearchResultActivity extends ThemeableActivity {
         mPersonGroupId = getIntent().getStringExtra("mPersonGroupID");
         gv = findViewById(R.id.searchresultGridView);
 
-        //todo: implement search from DB
-
         adapter = new SearchResultAdapter(SearchResultActivity.this, results);
         gv.setAdapter(adapter);
         gv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view,
                                     int position, long id) {
-                //todo: implement to start ItemActivity
+
+                Intent intent = new Intent(SearchResultActivity.this, ItemActivity.class);
+                intent.putExtra(ItemActivity.ALBUM_ITEM, albumItem);
+                intent.putExtra(ItemActivity.ALBUM_PATH, getData().getPath());
+                intent.putExtra(ItemActivity.ITEM_POSITION, getData().getAlbumItems().indexOf(albumItem));
+
+                if (Settings.getInstance(SearchResultActivity.this).showAnimations()) {
+                    ActivityOptionsCompat options =
+                            ActivityOptionsCompat.makeSceneTransitionAnimation(
+                                    SearchResultActivity.this, findViewById(R.id.resultimageview), //todo 이거 맞음?
+                                    albumItem.getPath());
+                    ActivityCompat.startActivityForResult(SearchResultActivity.this, intent,
+                            ItemActivity.VIEW_IMAGE, options.toBundle());
+                } else {
+                    ActivityCompat.startActivityForResult( SearchResultActivity.this, intent,
+                            ItemActivity.VIEW_IMAGE, null);
+                }
             }
         });
     }
@@ -89,11 +105,10 @@ public class SearchResultActivity extends ThemeableActivity {
         return 0;
     }
 
-    private void toolbarSetting(){
+    private Toolbar toolbarSetting(){
         final Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         Objects.requireNonNull(getSupportActionBar()).setDisplayShowTitleEnabled(false);
-        toolbar.setTitle(R.string.searchTitle);
         AnimatedVectorDrawable drawable = (AnimatedVectorDrawable)
                 ContextCompat.getDrawable(SearchResultActivity.this, R.drawable.back_to_cancel_avd);
         //mutating avd to reset it
@@ -112,6 +127,7 @@ public class SearchResultActivity extends ThemeableActivity {
                 onBackPressed();
             }
         });
+        return toolbar;
     }
 
     private Bitmap getPicture(String currentPhotoPath) {

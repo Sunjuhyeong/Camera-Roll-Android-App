@@ -62,6 +62,7 @@ public class SearchActivity extends ThemeableActivity {
     private List<ImageData> imageDataListOCR;
     private int FaceAlbumCode = 40;
     private int VisionAlbumCode = 50;
+    private int SearchResultCode = 60;
     File file;
 
     @Override
@@ -69,43 +70,20 @@ public class SearchActivity extends ThemeableActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_search);
 
-
-        //toolbar
-        final Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-        Objects.requireNonNull(getSupportActionBar()).setDisplayShowTitleEnabled(false);
-        toolbar.setTitle(R.string.searchTitle);
-        AnimatedVectorDrawable drawable = (AnimatedVectorDrawable)
-                ContextCompat.getDrawable(SearchActivity.this, R.drawable.back_to_cancel_avd);
-        //mutating avd to reset it
-        assert drawable != null;
-        drawable.mutate();
-        toolbar.setNavigationIcon(drawable);
-        Drawable navIcon = toolbar.getNavigationIcon();
-        if (navIcon != null) {
-            navIcon = DrawableCompat.wrap(navIcon);
-            DrawableCompat.setTint(navIcon.mutate(), textColorSecondary);
-            toolbar.setNavigationIcon(navIcon);
-        }
-        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                onBackPressed();
-            }
-        });
-
+        toolbarSetting();
 
         String sub_key_face = getResources().getString(R.string.subscription_key_face);
         String endpoint_face = "https://westus.api.cognitive.microsoft.com/face/v1.0/";
         faceServiceClient = new FaceServiceRestClient(endpoint_face, sub_key_face);
         searchResult = "search";
 
-        //DB 생성
-        ImageDB db = ImageDB.getDatabase(this);
-
-        //DB에 Thema가 Describe인 애들이랑 OCR인 애들을 부름
-        imageDataListDescribe = db.imageDataDao().findByThema("Describe");
-        imageDataListOCR = db.imageDataDao().findByThema("OCR");
+        //Don't need these functions when using SearchResultActivity.
+//        //DB 생성
+//        ImageDB db = ImageDB.getDatabase(this);
+//
+//        //DB에 Thema가 Describe인 애들이랑 OCR인 애들을 부름
+//        imageDataListDescribe = db.imageDataDao().findByThema("Describe");
+//        imageDataListOCR = db.imageDataDao().findByThema("OCR");
 
         mPersonGroupId = getIntent().getStringExtra("mPersonGroupID");
         gv = findViewById(R.id.faceGridView);
@@ -134,6 +112,7 @@ public class SearchActivity extends ThemeableActivity {
         menu.findItem(R.id.search);
         return true;
     }
+
     @Override
     public boolean onOptionsItemSelected (MenuItem item) {
         if (item.getItemId() == R.id.search) {
@@ -153,8 +132,13 @@ public class SearchActivity extends ThemeableActivity {
                 @Override
                 public boolean onQueryTextSubmit(String query) {
                     searchResult = query;
-                    makeAlbumVision(imageDataListDescribe, imageDataListOCR);
-                    return true;
+                    Intent intent = new Intent(SearchActivity.this.getApplicationContext(), SearchResultActivity.class);
+                    intent.putExtra("keyword", searchResult);
+                    ActivityOptionsCompat options;
+                    options = ActivityOptionsCompat.makeSceneTransitionAnimation(SearchActivity.this);
+                    startActivityForResult(intent,
+                            SearchResultCode, options.toBundle());
+                     return true;
                 }
 
                 //텍스트가 바뀔때마다 호출
@@ -167,17 +151,38 @@ public class SearchActivity extends ThemeableActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    private void toolbarSetting(){
+        //toolbar
+        final Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        Objects.requireNonNull(getSupportActionBar()).setDisplayShowTitleEnabled(false);
+        toolbar.setTitle(R.string.searchTitle);
+        AnimatedVectorDrawable drawable = (AnimatedVectorDrawable)
+                ContextCompat.getDrawable(SearchActivity.this, R.drawable.back_to_cancel_avd);
+        //mutating avd to reset it
+        assert drawable != null;
+        drawable.mutate();
+        toolbar.setNavigationIcon(drawable);
+        Drawable navIcon = toolbar.getNavigationIcon();
+        if (navIcon != null) {
+            navIcon = DrawableCompat.wrap(navIcon);
+            DrawableCompat.setTint(navIcon.mutate(), textColorSecondary);
+            toolbar.setNavigationIcon(navIcon);
+        }
+        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                onBackPressed();
+            }
+        });
+    }
+
     private class getPersonListTask extends AsyncTask<Void,String, Person[]> {
 
         @Override
         protected Person[] doInBackground(Void... params) {
-
             try {
                 Person[] result = faceServiceClient.listPersonsInLargePersonGroup(mPersonGroupId);
-                if (result == null)
-                {
-                    return null;
-                }
                 return result;
             } catch (Exception e) {
                 publishProgress("get PersonList failed");
@@ -205,36 +210,17 @@ public class SearchActivity extends ThemeableActivity {
                 @Override
                 public void onItemClick(AdapterView<?> parent, View view,
                                         int position, long id) {
-                    ArrayList<AlbumItem> albumItemList = new ArrayList<>();
                     String targetId = personList[position].personId.toString();
-                    String folderName = "/data/user/0/us.koller.cameraroll.debug/app_tempFace";
+                    Intent intent = new Intent(SearchActivity.this.getApplicationContext(), SearchResultActivity.class);
+                    intent.putExtra("mPersonID", targetId);
+                    ActivityOptionsCompat options;
+                    options = ActivityOptionsCompat.makeSceneTransitionAnimation(SearchActivity.this);
+                    startActivityForResult(intent,
+                            SearchResultCode, options.toBundle());
 
-                    ImageDB db = ImageDB.getDatabase(view.getContext());
-                    List<ImageData> personList = db.imageDataDao().findByPersonID(targetId);
-
-                    albumItemList.addAll(albumItemFace(personList));
-                    Album album = new Album().setPath(folderName);
-                    album.setCached(true);
-                    album.setAlbumItems(albumItemList);
-                    startAlbumActivity(album, FaceAlbumCode);
                 }
             });
         }
-    }
-
-    private void makeAlbumVision(List<ImageData> imageDataListDescribe, List<ImageData> imageDataListOCR) {
-        //파일 저장함.
-        //albumItemList도 만듬
-        ArrayList<AlbumItem> albumItemList = new ArrayList<>();
-        albumItemList.addAll(albumItemDescribe(imageDataListDescribe, searchResult));
-        albumItemList.addAll(albumItemOCR(imageDataListOCR, searchResult));
-
-        String folder = "/data/user/0/us.koller.cameraroll.debug/app_temp2";
-
-        Album album = new Album().setPath(folder);
-        album.setCached(true);
-        album.setAlbumItems(albumItemList);
-        startAlbumActivity(album, VisionAlbumCode);
     }
 
     private Bitmap getFaceThumbnail(Person person) throws IOException {
@@ -299,36 +285,14 @@ public class SearchActivity extends ThemeableActivity {
         return Bitmap.createBitmap(src, 0, 0, src.getWidth(), src.getHeight(), matrix, true);
     }
 
-    private void startAlbumActivity(Album album, int code) {
-        Intent intent = new Intent(getApplicationContext(), AlbumActivity.class);
-        intent.putExtra(AlbumActivity.ALBUM_PATH, album.getPath());
-        intent.putExtra("albumFromSearch", (Serializable) album);
-        intent.putExtra("from","fromSearch");
-
-        String debug = album.getPath();
-        ActivityOptionsCompat options;
-
-        //noinspection unchecked
-        options = ActivityOptionsCompat.makeSceneTransitionAnimation((Activity) this);
-        startActivityForResult(intent,
-                code, options.toBundle());
-    }
-
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == FaceAlbumCode) {
+        if (requestCode == SearchResultCode) {
             if (resultCode != RESULT_CANCELED) {
                 setResult(RESULT_OK, data);
             }
-            file.delete();
-
-                Log.d("MyTag", "wrong file deleted in searchActivity");
-        } else if(requestCode == VisionAlbumCode){
-            if (resultCode != RESULT_CANCELED) {
-                setResult(RESULT_OK, data);
-            }
-            file.delete();
+            //todo: implement if needed
         }
     }
 
@@ -383,75 +347,6 @@ public class SearchActivity extends ThemeableActivity {
         }
     }
 
-    private ArrayList<AlbumItem> albumItemDescribe(List<ImageData> imageDataListDescribe, String searchResult){
-        ArrayList<AlbumItem> albumItemList = new ArrayList<>();
-
-        for(int i=0; i<imageDataListDescribe.size(); i++){
-            //이미 찾았던거면 안넣는다.
-            if(!checkId.contains(imageDataListDescribe.get(i).getImage_ID())) {
-                if (imageDataListDescribe.get(i).getDataString().contains(searchResult)) {
-                    Bitmap bitmap = BitmapFactory.decodeFile(imageDataListDescribe.get(i).getFolderName());
-                    String imagePath = imageDataListDescribe.get(i).getFolderName();
-                    albumItemList.add(AlbumItem.getInstance(imagePath));
-
-                    //이미지 파일 저장
-                    new ImageSaver(this)
-                            .setFileName(imageDataListDescribe.get(i).image_ID)
-                            .setDirectoryName("temp2")
-                            .save(bitmap);
-
-                    //뭐 넣었는지 체크용
-                    checkId.add(imageDataListDescribe.get(i).getImage_ID());
-                }
-            }
-        }
-        return albumItemList;
-    }
-
-    private ArrayList<AlbumItem> albumItemOCR(List<ImageData> imageDataListOCR, String searchResult){
-        ArrayList<AlbumItem> albumItemList = new ArrayList<>();
-
-        //OCR 정보에서 검색하기
-        for(int i=0; i<imageDataListOCR.size(); i++){
-            //이미 찾았던거면 안넣는다.
-            if(!checkId.contains(imageDataListOCR.get(i).getImage_ID())) {
-                if (imageDataListOCR.get(i).getDataString().contains(searchResult)) {
-                    Bitmap bitmap = BitmapFactory.decodeFile(imageDataListOCR.get(i).getFolderName());
-                    String imagePath = imageDataListOCR.get(i).getFolderName();
-                    albumItemList.add(AlbumItem.getInstance(imagePath));
-
-                    //이미지 파일 저장
-                    new ImageSaver(this)
-                            .setFileName(imageDataListOCR.get(i).image_ID)
-                            .setDirectoryName("temp2")
-                            .save(bitmap);
-
-                    //뭐 넣었는지 체크용
-                    checkId.add(imageDataListOCR.get(i).getImage_ID());
-                }
-            }
-        }
-        return albumItemList;
-    }
-
-    private ArrayList<AlbumItem> albumItemFace(List<ImageData> imageDataListFace){
-        ArrayList<AlbumItem> albumItemList = new ArrayList<>();
-
-        //FACE 정보에서 검색하기
-        for(int i=0; i<imageDataListFace.size(); i++){
-            String facePath = imageDataListFace.get(i).getFolderName();
-            Bitmap bitmap = BitmapFactory.decodeFile(facePath);
-            albumItemList.add(AlbumItem.getInstance(facePath));
-            //이미지 파일 저장
-            new ImageSaver(this)
-                    .setFileName(imageDataListFace.get(i).image_ID)
-                    .setDirectoryName("tempFace")
-                    .save(bitmap);
-        }
-        return albumItemList;
-    }
-
-    //이미지 새로 만들어서 저장하기
     public class ImageSaver {
 
         private String directoryName = "images";
@@ -522,4 +417,101 @@ public class SearchActivity extends ThemeableActivity {
                     Environment.DIRECTORY_PICTURES), albumName);
         }
     }
+
+
+    //Don't need these functions when using SearchResultActivity.
+    private void makeAlbumVision(List<ImageData> imageDataListDescribe, List<ImageData> imageDataListOCR) {
+        //파일 저장함.
+        //albumItemList도 만듬
+        ArrayList<AlbumItem> albumItemList = new ArrayList<>();
+        albumItemList.addAll(albumItemDescribe(imageDataListDescribe, searchResult));
+        albumItemList.addAll(albumItemOCR(imageDataListOCR, searchResult));
+
+        String folder = "/data/user/0/us.koller.cameraroll.debug/app_temp2";
+
+        Album album = new Album().setPath(folder);
+        album.setCached(true);
+        album.setAlbumItems(albumItemList);
+        startAlbumActivity(album, VisionAlbumCode);
+    }
+    private void startAlbumActivity(Album album, int code) {
+        Intent intent = new Intent(getApplicationContext(), AlbumActivity.class);
+        intent.putExtra(AlbumActivity.ALBUM_PATH, album.getPath());
+        intent.putExtra("albumFromSearch", (Serializable) album);
+        intent.putExtra("from","fromSearch");
+
+        String debug = album.getPath();
+        ActivityOptionsCompat options;
+
+        //noinspection unchecked
+        options = ActivityOptionsCompat.makeSceneTransitionAnimation((Activity) this);
+        startActivityForResult(intent,
+                code, options.toBundle());
+    }
+    private ArrayList<AlbumItem> albumItemDescribe(List<ImageData> imageDataListDescribe, String searchResult){
+        ArrayList<AlbumItem> albumItemList = new ArrayList<>();
+
+        for(int i=0; i<imageDataListDescribe.size(); i++){
+            //이미 찾았던거면 안넣는다.
+            if(!checkId.contains(imageDataListDescribe.get(i).getImage_ID())) {
+                if (imageDataListDescribe.get(i).getDataString().contains(searchResult)) {
+                    Bitmap bitmap = BitmapFactory.decodeFile(imageDataListDescribe.get(i).getFolderName());
+                    String imagePath = imageDataListDescribe.get(i).getFolderName();
+                    albumItemList.add(AlbumItem.getInstance(imagePath));
+
+                    //이미지 파일 저장
+                    new ImageSaver(this)
+                            .setFileName(imageDataListDescribe.get(i).image_ID)
+                            .setDirectoryName("temp2")
+                            .save(bitmap);
+
+                    //뭐 넣었는지 체크용
+                    checkId.add(imageDataListDescribe.get(i).getImage_ID());
+                }
+            }
+        }
+        return albumItemList;
+    }
+    private ArrayList<AlbumItem> albumItemOCR(List<ImageData> imageDataListOCR, String searchResult){
+        ArrayList<AlbumItem> albumItemList = new ArrayList<>();
+
+        //OCR 정보에서 검색하기
+        for(int i=0; i<imageDataListOCR.size(); i++){
+            //이미 찾았던거면 안넣는다.
+            if(!checkId.contains(imageDataListOCR.get(i).getImage_ID())) {
+                if (imageDataListOCR.get(i).getDataString().contains(searchResult)) {
+                    Bitmap bitmap = BitmapFactory.decodeFile(imageDataListOCR.get(i).getFolderName());
+                    String imagePath = imageDataListOCR.get(i).getFolderName();
+                    albumItemList.add(AlbumItem.getInstance(imagePath));
+
+                    //이미지 파일 저장
+                    new ImageSaver(this)
+                            .setFileName(imageDataListOCR.get(i).image_ID)
+                            .setDirectoryName("temp2")
+                            .save(bitmap);
+
+                    //뭐 넣었는지 체크용
+                    checkId.add(imageDataListOCR.get(i).getImage_ID());
+                }
+            }
+        }
+        return albumItemList;
+    }
+    private ArrayList<AlbumItem> albumItemFace(List<ImageData> imageDataListFace){
+        ArrayList<AlbumItem> albumItemList = new ArrayList<>();
+
+        //FACE 정보에서 검색하기
+        for(int i=0; i<imageDataListFace.size(); i++){
+            String facePath = imageDataListFace.get(i).getFolderName();
+            Bitmap bitmap = BitmapFactory.decodeFile(facePath);
+            albumItemList.add(AlbumItem.getInstance(facePath));
+            //이미지 파일 저장
+            new ImageSaver(this)
+                    .setFileName(imageDataListFace.get(i).image_ID)
+                    .setDirectoryName("tempFace")
+                    .save(bitmap);
+        }
+        return albumItemList;
+    }
+
 }
