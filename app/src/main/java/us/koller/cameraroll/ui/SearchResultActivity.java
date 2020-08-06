@@ -1,10 +1,6 @@
 package us.koller.cameraroll.ui;
 
 import android.content.Intent;
-import androidx.appcompat.widget.Toolbar;
-import androidx.core.content.ContextCompat;
-import androidx.core.graphics.drawable.DrawableCompat;
-
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
@@ -86,31 +82,31 @@ public class SearchResultActivity extends ThemeableActivity {
 
         gv = findViewById(R.id.searchresultGridView);
 
-        adapter = new SearchResultAdapter(SearchResultActivity.this, results);
+        adapter = new SearchResultAdapter(SearchResultActivity.this, bitmapArrayList);
         gv.setAdapter(adapter);
-        gv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view,
-                                    int position, long id) {
-
-                Intent intent = new Intent(SearchResultActivity.this, ItemActivity.class);
-                intent.putExtra(ItemActivity.ALBUM_ITEM, albumItem);
-                intent.putExtra(ItemActivity.ALBUM_PATH, getData().getPath());
-                intent.putExtra(ItemActivity.ITEM_POSITION, getData().getAlbumItems().indexOf(albumItem));
-
-                if (Settings.getInstance(SearchResultActivity.this).showAnimations()) {
-                    ActivityOptionsCompat options =
-                            ActivityOptionsCompat.makeSceneTransitionAnimation(
-                                    SearchResultActivity.this, findViewById(R.id.resultimageview), //todo 이거 맞음?
-                                    albumItem.getPath());
-                    ActivityCompat.startActivityForResult(SearchResultActivity.this, intent,
-                            ItemActivity.VIEW_IMAGE, options.toBundle());
-                } else {
-                    ActivityCompat.startActivityForResult( SearchResultActivity.this, intent,
-                            ItemActivity.VIEW_IMAGE, null);
-                }
-            }
-        });
+//        gv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+//            @Override
+//            public void onItemClick(AdapterView<?> parent, View view,
+//                                    int position, long id) {
+//
+//                Intent intent = new Intent(SearchResultActivity.this, ItemActivity.class);
+//                intent.putExtra(ItemActivity.ALBUM_ITEM, albumItem);
+//                intent.putExtra(ItemActivity.ALBUM_PATH, getData().getPath());
+//                intent.putExtra(ItemActivity.ITEM_POSITION, getData().getAlbumItems().indexOf(albumItem));
+//
+//                if (Settings.getInstance(SearchResultActivity.this).showAnimations()) {
+//                    ActivityOptionsCompat options =
+//                            ActivityOptionsCompat.makeSceneTransitionAnimation(
+//                                    SearchResultActivity.this, findViewById(R.id.resultimageview), //todo 이거 맞음?
+//                                    albumItem.getPath());
+//                    ActivityCompat.startActivityForResult(SearchResultActivity.this, intent,
+//                            ItemActivity.VIEW_IMAGE, options.toBundle());
+//                } else {
+//                    ActivityCompat.startActivityForResult( SearchResultActivity.this, intent,
+//                            ItemActivity.VIEW_IMAGE, null);
+//                }
+//            }
+//        });
     }
 
 
@@ -187,60 +183,8 @@ public class SearchResultActivity extends ThemeableActivity {
         return Bitmap.createBitmap(src, 0, 0, src.getWidth(), src.getHeight(), matrix, true);
     }
 
-    public static class ImageHelper {
-        // Resize face rectangle, for better view for human
-        // To make the rectangle larger, faceRectEnlargeRatio should be larger than 1, recommend 1.3
-        private static FaceRectangle calculateFaceRectangle(
-                Bitmap bitmap, FaceRectangle faceRectangle, double faceRectEnlargeRatio) {
-            // Get the resized side length of the face rectangle
-            double sideLength = faceRectangle.width * faceRectEnlargeRatio;
-            sideLength = Math.min(sideLength, bitmap.getWidth());
-            sideLength = Math.min(sideLength, bitmap.getHeight());
-
-            // Make the left edge to left more.
-            double left = faceRectangle.left
-                    - faceRectangle.width * (faceRectEnlargeRatio - 1.0) * 0.5;
-            left = Math.max(left, 0.0);
-            left = Math.min(left, bitmap.getWidth() - sideLength);
-
-            // Make the top edge to top more.
-            double top = faceRectangle.top
-                    - faceRectangle.height * (faceRectEnlargeRatio - 1.0) * 0.5;
-            top = Math.max(top, 0.0);
-            top = Math.min(top, bitmap.getHeight() - sideLength);
-
-            // Shift the top edge to top more, for better view for human
-            double shiftTop = faceRectEnlargeRatio - 1.0;
-            shiftTop = Math.max(shiftTop, 0.0);
-            shiftTop = Math.min(shiftTop, 1.0);
-            top -= 0.15 * shiftTop * faceRectangle.height;
-            top = Math.max(top, 0.0);
-
-            // Set the result.
-            FaceRectangle result = new FaceRectangle();
-            result.left = (int) left;
-            result.top = (int) top;
-            result.width = (int) sideLength;
-            result.height = (int) sideLength;
-            return result;
-        }
-
-        // Crop the face thumbnail out from the original image.
-        // For better view for human, face rectangles are resized to the rate faceRectEnlargeRatio.
-        public static Bitmap generateFaceThumbnail(
-                Bitmap originalBitmap,
-                FaceRectangle faceRectangle) throws IOException {
-            FaceRectangle faceRect =
-                    calculateFaceRectangle(originalBitmap, faceRectangle, FACE_RECT_SCALE_RATIO);
-
-            return Bitmap.createBitmap(
-                    originalBitmap, faceRect.left, faceRect.top, faceRect.width, faceRect.height);
-        }
-    }
-
     public ArrayList<String> getPathFromDescribe(List<ImageData> imageDataListDescribe, String searchResult){
         ArrayList<String> pathListDescribe = new ArrayList<>();
-
         for(int i=0; i<imageDataListDescribe.size(); i++){
             if(imageDataListDescribe.get(i).getDataString().contains(searchResult)){
                 if(!checkList.contains(imageDataListDescribe.get(i).getImage_ID())){
@@ -249,7 +193,6 @@ public class SearchResultActivity extends ThemeableActivity {
                 }
             }
         }
-
         return pathListDescribe;
     }
 
@@ -264,29 +207,24 @@ public class SearchResultActivity extends ThemeableActivity {
                 }
             }
         }
-
         return pathListOCR;
     }
 
     public ArrayList<String> getPathFromFace(List<ImageData> imageDataListFace, String mPersonId){
         ArrayList<String> pathListFace = new ArrayList<>();
-
         for(int i=0; i<imageDataListFace.size(); i++){
             if(imageDataListFace.get(i).getDataString().contains(mPersonId)){
                 pathListFace.add(imageDataListFace.get(i).getFolderName());
             }
         }
-
         return pathListFace;
     }
 
     public ArrayList<Bitmap> makeBitmapFromPaths(ArrayList<String> pathList){
         ArrayList<Bitmap> bitmaps = new ArrayList<>();
-
         for(int i=0; i<pathList.size(); i++){
             bitmaps.add(getPicture(pathList.get(i)));
         }
-
         return bitmaps;
     }
 
