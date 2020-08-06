@@ -18,13 +18,13 @@ android {
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-            resValue "string", "app_name", "Camera Roll"
+            resValue "string", "app_name", "걸러리"
         }
 
         debug {
             applicationIdSuffix ".debug"
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-            resValue "string", "app_name", "Camera Roll (debug)"
+            resValue "string", "app_name", "걸러리"
             //room debug용으로 추가함
 //            resValue("string", "PORT_NUMBER", "8081")
 

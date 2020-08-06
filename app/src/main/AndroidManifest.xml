@@ -16,7 +16,8 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/CameraRoll.Theme">
-        <activity android:name=".ui.SearchResultActivity"></activity>
+        <activity android:name=".ui.BigImageActivity"></activity>
+        <activity android:name=".ui.SearchResultActivity" />
         <activity android:name=".ui.SearchActivity" />
         <activity android:name=".ui.PersonGroupActivity" />
         <activity

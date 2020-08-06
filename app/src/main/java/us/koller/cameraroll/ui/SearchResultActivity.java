@@ -92,24 +92,30 @@ public class SearchResultActivity extends ThemeableActivity {
             @Override
             public void onItemClick(AdapterView<?> parent, View view,
                                     int position, long id) {
-                AlbumItem albumItem = album.getAlbumItems().get(position);
 
-                Intent intent = new Intent(SearchResultActivity.this, ItemActivity.class);
-                intent.putExtra(ItemActivity.ALBUM_ITEM, albumItem);
-                intent.putExtra(ItemActivity.ALBUM_PATH, album.getPath());
-                intent.putExtra(ItemActivity.ITEM_POSITION, album.getAlbumItems().indexOf(albumItem));
-
-                if (Settings.getInstance(SearchResultActivity.this).showAnimations()) {
-                    ActivityOptionsCompat options =
-                            ActivityOptionsCompat.makeSceneTransitionAnimation(
-                                    SearchResultActivity.this, findViewById(R.id.resultimageview), //todo 이거 맞음?
-                                    albumItem.getPath());
-                    ActivityCompat.startActivityForResult(SearchResultActivity.this, intent,
-                            ItemActivity.VIEW_IMAGE, options.toBundle());
-                } else {
-                    ActivityCompat.startActivityForResult( SearchResultActivity.this, intent,
-                            ItemActivity.VIEW_IMAGE, null);
-                }
+                Intent intent = new Intent(SearchResultActivity.this, BigImageActivity.class);
+                intent.putExtra("path", pathList.get(position));
+                startActivity(intent);
+//                AlbumItem albumItem = AlbumItem.getInstance(pathList.get(position));
+//                Bitmap debug = BitmapFactory.decodeFile(pathList.get(position));
+//
+//
+//                Intent intent = new Intent(SearchResultActivity.this, ItemActivity.class);
+//                intent.putExtra(ItemActivity.ALBUM_ITEM, albumItem);
+//                intent.putExtra(ItemActivity.ALBUM_PATH, album.getPath());
+//                intent.putExtra(ItemActivity.ITEM_POSITION, album.getAlbumItems().indexOf(albumItem));
+//
+//                if (Settings.getInstance(SearchResultActivity.this).showAnimations()) {
+//                    ActivityOptionsCompat options =
+//                            ActivityOptionsCompat.makeSceneTransitionAnimation(
+//                                    SearchResultActivity.this, findViewById(R.id.resultimageview), //todo 이거 맞음?
+//                                    albumItem.getPath());
+//                    ActivityCompat.startActivityForResult(SearchResultActivity.this, intent,
+//                            ItemActivity.VIEW_IMAGE, options.toBundle());
+//                } else {
+//                    ActivityCompat.startActivityForResult( SearchResultActivity.this, intent,
+//                            ItemActivity.VIEW_IMAGE, null);
+//                }
             }
         });
     }

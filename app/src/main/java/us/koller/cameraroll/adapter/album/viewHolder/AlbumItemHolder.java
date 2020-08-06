@@ -167,7 +167,11 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
                     public void onResourceReady(@NonNull Bitmap resource, Transition<? super Bitmap> transition) {
                         imageView.setImageBitmap(resource);
                         mBitmap = resource.copy(resource.getConfig(), false);
+                        if(true) {
+                            new deletePersoninLargePersonGroupTask(UUID.fromString("639f0c68-b9f8-4b0c-9139-c443b6cb625e"), mPersonGroupId).execute();
 
+                            return;
+                        }
                         boolean canDescribe = true;
                         boolean canOCR = true;
                         boolean canFace = true;
@@ -444,6 +448,7 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
         @Override
         protected void onPostExecute(UUID result) {
             if (result != null) {
+                isMatched.put(mFace, true);
                 new AddFaceTask(this.imageName,this.folderName, result, mPersonGroupId, mBitmap, mFace).execute();
             }
         }

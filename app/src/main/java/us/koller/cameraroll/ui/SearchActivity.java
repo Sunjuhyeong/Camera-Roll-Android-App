@@ -199,10 +199,9 @@ public class SearchActivity extends ThemeableActivity {
             if (personList == null) {
                 return;
             }
-//            for (Person person : personList) { //todo 나중에 하나의 폰에서만 하기
-            for (int i = 0; i<2; i++) {
+            for (Person person : personList) {
                 try {
-                    Bitmap thumbnail = getFaceThumbnail(personList[i]);
+                    Bitmap thumbnail = getFaceThumbnail(person);
                     thumbnails.add(thumbnail);
                 } catch (IOException e) {
                     e.printStackTrace();
