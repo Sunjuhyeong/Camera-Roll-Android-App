@@ -1,6 +1,10 @@
 package us.koller.cameraroll.ui;
 
 import android.content.Intent;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.content.ContextCompat;
+import androidx.core.graphics.drawable.DrawableCompat;
+
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
@@ -36,18 +40,21 @@ import us.koller.cameraroll.room.ImageData;
 public class SearchResultActivity extends ThemeableActivity {
 
     private static final double FACE_RECT_SCALE_RATIO = 1.3;
-    private String mPersonGroupId;
+    private String mPersonId;
     private FaceServiceClient faceServiceClient;
     private SearchResultAdapter adapter;
     private GridView gv;
     private ArrayList<Bitmap> results = new ArrayList<>();
-    private ArrayList<String> checkId = new ArrayList<>();
     private String searchResult;
     private List<ImageData> imageDataListDescribe;
     private List<ImageData> imageDataListOCR;
+    private List<ImageData> imageDataListFace;
     private int FaceAlbumCode = 40;
     private int VisionAlbumCode = 50;
     private File file;
+    private ArrayList<Bitmap> bitmapArrayList = new ArrayList<>();
+    private ArrayList<String> pathList = new ArrayList<>();
+    private ArrayList<String> checkList = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,15 +63,27 @@ public class SearchResultActivity extends ThemeableActivity {
 
         String searchResult = getIntent().getStringExtra("keyword");
         toolbarSetting().setTitle(searchResult);
+        mPersonId = getIntent().getStringExtra("mPersonID");
+
         //DB 생성
         ImageDB db = ImageDB.getDatabase(this);
 
-        //DB에 Thema가 Describe인 애들이랑 OCR인 애들을 부름
-        imageDataListDescribe = db.imageDataDao().findByThema("Describe");
-        imageDataListOCR = db.imageDataDao().findByThema("OCR");
+        if(searchResult != null){
+            //DB에 Thema가 Describe인 애들이랑 OCR인 애들을 부름
+            imageDataListDescribe = db.imageDataDao().findByThema("Describe");
+            imageDataListOCR = db.imageDataDao().findByThema("OCR");
 
+            pathList.addAll(getPathFromDescribe(imageDataListDescribe, searchResult));
+            pathList.addAll(getPathFromOCR(imageDataListOCR, searchResult));
 
-        mPersonGroupId = getIntent().getStringExtra("mPersonGroupID");
+            bitmapArrayList = makeBitmapFromPaths(pathList);
+        } else if(mPersonId != null){
+            imageDataListFace = db.imageDataDao().findByThema("Face_mPersonID");
+            pathList.addAll(getPathFromFace(imageDataListFace, mPersonId));
+
+            bitmapArrayList.addAll(makeBitmapFromPaths(pathList));
+        }
+
         gv = findViewById(R.id.searchresultGridView);
 
         adapter = new SearchResultAdapter(SearchResultActivity.this, results);
@@ -218,5 +237,58 @@ public class SearchResultActivity extends ThemeableActivity {
                     originalBitmap, faceRect.left, faceRect.top, faceRect.width, faceRect.height);
         }
     }
+
+    public ArrayList<String> getPathFromDescribe(List<ImageData> imageDataListDescribe, String searchResult){
+        ArrayList<String> pathListDescribe = new ArrayList<>();
+
+        for(int i=0; i<imageDataListDescribe.size(); i++){
+            if(imageDataListDescribe.get(i).getDataString().contains(searchResult)){
+                if(!checkList.contains(imageDataListDescribe.get(i).getImage_ID())){
+                    pathListDescribe.add(imageDataListDescribe.get(i).getFolderName());
+                    checkList.add(imageDataListDescribe.get(i).getImage_ID());
+                }
+            }
+        }
+
+        return pathListDescribe;
+    }
+
+    public ArrayList<String> getPathFromOCR(List<ImageData> imageDataListOCR, String searchResult){
+        ArrayList<String> pathListOCR = new ArrayList<>();
+
+        for(int i=0; i<imageDataListOCR.size(); i++){
+            if(imageDataListOCR.get(i).getDataString().contains(searchResult)){
+                if(!checkList.contains(imageDataListOCR.get(i).getImage_ID())){
+                    pathListOCR.add(imageDataListOCR.get(i).getFolderName());
+                    checkList.add(imageDataListOCR.get(i).getImage_ID());
+                }
+            }
+        }
+
+        return pathListOCR;
+    }
+
+    public ArrayList<String> getPathFromFace(List<ImageData> imageDataListFace, String mPersonId){
+        ArrayList<String> pathListFace = new ArrayList<>();
+
+        for(int i=0; i<imageDataListFace.size(); i++){
+            if(imageDataListFace.get(i).getDataString().contains(mPersonId)){
+                pathListFace.add(imageDataListFace.get(i).getFolderName());
+            }
+        }
+
+        return pathListFace;
+    }
+
+    public ArrayList<Bitmap> makeBitmapFromPaths(ArrayList<String> pathList){
+        ArrayList<Bitmap> bitmaps = new ArrayList<>();
+
+        for(int i=0; i<pathList.size(); i++){
+            bitmaps.add(getPicture(pathList.get(i)));
+        }
+
+        return bitmaps;
+    }
+
 
 }
