@@ -32,6 +32,8 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.appcompat.widget.Toolbar;
+
+import android.os.Parcelable;
 import android.transition.Fade;
 import android.transition.Slide;
 import android.transition.TransitionSet;
@@ -45,6 +47,7 @@ import android.view.ViewTreeObserver;
 import android.view.WindowInsets;
 import android.view.animation.AccelerateDecelerateInterpolator;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -653,6 +656,7 @@ public class AlbumActivity extends ThemeableActivity
                 Intent intentS = new Intent(this, SearchActivity.class);
                 intentS.putExtra(ALBUM_PATH, album.getPath());
                 intentS.putExtra("mPersonGroupID", mPersonGroupId );
+                intentS.putExtra("album", (Serializable) album);
                 startActivityForResult(intentS, SearchCode);
                 break;
 
