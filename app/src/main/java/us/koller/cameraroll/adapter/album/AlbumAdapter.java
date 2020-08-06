@@ -188,7 +188,6 @@ public class AlbumAdapter extends AbstractRecyclerViewAdapter<Album> {
         }
     }
 
-
     public boolean isSelectorModeActive() {
         return getSelectorMode() && !pickPhotos();
     }

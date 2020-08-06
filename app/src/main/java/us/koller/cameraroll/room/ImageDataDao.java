@@ -20,6 +20,12 @@ public interface ImageDataDao {
     @Query("SELECT * FROM ImageData WHERE thema LIKE :search")
     List<ImageData> findByThema(String search);
 
+    @Query("SELECT * FROM ImageData WHERE dataString LIKE :search")
+    List<ImageData> findByPersonID(String search);
+
+    @Query("SELECT * FROM ImageData WHERE image_ID LIKE :image_ID AND thema LIKE :thema")
+    ImageData findFaceRectangle(String image_ID, String thema);
+
     @Insert
     void insert(ImageData imageData);
 

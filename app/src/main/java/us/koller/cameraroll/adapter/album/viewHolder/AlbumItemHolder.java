@@ -344,7 +344,7 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
                 Person[] result = faceServiceClient.listPersonsInLargePersonGroup(mPersonGroupId);
                 if (result == null)
                 {
-                    new AddPersonTask(this.imageName, this.folderName, mBitmap, mFace).execute(mPersonGroupId);
+//                    new AddPersonTask(this.imageName, this.folderName, mBitmap, mFace).execute(mPersonGroupId);
                     return null;
                 }
                 return result;
@@ -691,7 +691,7 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
         ImageData imageData = new ImageData(imageName, folderName, thema, dataString);
 
         new InsertAsyncTask(db.imageDataDao()).execute(imageData);
-        Toast.makeText(itemView.getContext(), "정보가 저장되었습니다.", Toast.LENGTH_SHORT).show();
+        Toast.makeText(itemView.getContext(), thema + ": 정보가 저장되었습니다.", Toast.LENGTH_SHORT).show();
     }
 
     //메인스레드에서 데이터베이스에 접근할 수 없으므로 AsyncTask를 사용하도록 한다.
