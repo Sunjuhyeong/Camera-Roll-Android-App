@@ -1,6 +1,7 @@
 package us.koller.cameraroll.ui;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.drawable.AnimatedVectorDrawable;
@@ -12,6 +13,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.GridView;
 import android.widget.SearchView;
@@ -34,6 +36,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import us.koller.cameraroll.R;
 import us.koller.cameraroll.adapter.SearchAdapter;
@@ -60,8 +63,8 @@ public class SearchActivity extends ThemeableActivity {
 
         final Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        ActionBar actionBar = getSupportActionBar();
-
+        Objects.requireNonNull(getSupportActionBar()).setDisplayShowTitleEnabled(false);
+        toolbar.setTitle(R.string.searchTitle);
         AnimatedVectorDrawable drawable = (AnimatedVectorDrawable)
                 ContextCompat.getDrawable(SearchActivity.this, R.drawable.back_to_cancel_avd);
         //mutating avd to reset it
@@ -149,31 +152,20 @@ public class SearchActivity extends ThemeableActivity {
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.search_menu, menu);
 
-        MenuItem mSearch = menu.findItem(R.id.search);
-        mSearch.setVisible(true);
+        menu.findItem(R.id.search);
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected (MenuItem item){
         if(item.getItemId() == R.id.search) {
-            //메뉴 아이콘 클릭했을 시 확장, 취소했을 시 축소
-            item.setOnActionExpandListener(new MenuItem.OnActionExpandListener() {
-                @Override
-                public boolean onMenuItemActionExpand(MenuItem item) {
-                    return true;
-                }
-
-                @Override
-                public boolean onMenuItemActionCollapse(MenuItem item) {
-                    return true;
-                }
-            });
 
             //menuItem을 이용해서 SearchView 변수 생성
             SearchView sv = (SearchView) item.getActionView();
-
-            //확인버튼 활성화
+            sv.setFocusable(true);
+            sv.setIconified(false);
+            sv.clearFocus();
+            sv.requestFocusFromTouch();
             sv.setSubmitButtonEnabled(true);
 
             //SearchView의 검색 이벤트

@@ -32,5 +32,5 @@ Simple Gallery App for Android, with lovely Material Design.<br>
  
  
 # Search by face
- Microsoft Azure's Face API detect faces in each picture. Using the API, save each person to LargePersonGroup in the API's server, and verify new face in the personGroup.
+ Microsoft Azure's Face API detect faces in each picture. Using the API, save each person to LargePersonGroup in the API's server, and verify new face in the LargePersonGroup.
  Import the package "com.microsoft.projectoxford.face" for using the API.

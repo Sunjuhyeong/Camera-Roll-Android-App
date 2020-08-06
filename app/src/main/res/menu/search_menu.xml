@@ -8,5 +8,6 @@
         android:icon="@android:drawable/ic_menu_search"
         android:title="search"
         app:actionViewClass="android.widget.SearchView"
-        app:showAsAction="collapseActionView|ifRoom" />
+        app:showAsAction="collapseActionView|ifRoom"
+        app:iconifiedByDefault="false"/>
 </menu>
