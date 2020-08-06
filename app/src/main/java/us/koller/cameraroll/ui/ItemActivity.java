@@ -172,7 +172,7 @@ public class ItemActivity extends ThemeableActivity {
 
         view_only = getIntent().getBooleanExtra(VIEW_ONLY, false);
 
-        if (!view_only && Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && showAnimations()) {
+        if (!view_only && showAnimations()) {
             if (savedInstanceState == null) {
                 postponeEnterTransition();
             }
@@ -199,56 +199,25 @@ public class ItemActivity extends ThemeableActivity {
         }
 
         final ViewGroup rootView = findViewById(R.id.root_view);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            rootView.setOnApplyWindowInsetsListener(new View.OnApplyWindowInsetsListener() {
-                @Override
-                @RequiresApi(api = Build.VERSION_CODES.KITKAT_WATCH)
-                public WindowInsets onApplyWindowInsets(View view, WindowInsets insets) {
-                    toolbar.setPadding(toolbar.getPaddingStart() + insets.getSystemWindowInsetLeft(),
-                            toolbar.getPaddingTop() + insets.getSystemWindowInsetTop(),
-                            toolbar.getPaddingEnd() + insets.getSystemWindowInsetRight(),
-                            toolbar.getPaddingBottom());
+        rootView.setOnApplyWindowInsetsListener(new View.OnApplyWindowInsetsListener() {
+            @Override
+            @RequiresApi(api = Build.VERSION_CODES.KITKAT_WATCH)
+            public WindowInsets onApplyWindowInsets(View view, WindowInsets insets) {
+                toolbar.setPadding(toolbar.getPaddingStart() + insets.getSystemWindowInsetLeft(),
+                        toolbar.getPaddingTop() + insets.getSystemWindowInsetTop(),
+                        toolbar.getPaddingEnd() + insets.getSystemWindowInsetRight(),
+                        toolbar.getPaddingBottom());
 
-                    bottomBar.setPadding(bottomBar.getPaddingStart() + insets.getSystemWindowInsetLeft(),
-                            bottomBar.getPaddingTop(),
-                            bottomBar.getPaddingEnd() + insets.getSystemWindowInsetRight(),
-                            bottomBar.getPaddingBottom() + insets.getSystemWindowInsetBottom());
+                bottomBar.setPadding(bottomBar.getPaddingStart() + insets.getSystemWindowInsetLeft(),
+                        bottomBar.getPaddingTop(),
+                        bottomBar.getPaddingEnd() + insets.getSystemWindowInsetRight(),
+                        bottomBar.getPaddingBottom() + insets.getSystemWindowInsetBottom());
 
-                    // clear this listener so insets aren't re-applied
-                    rootView.setOnApplyWindowInsetsListener(null);
-                    return insets.consumeSystemWindowInsets();
-                }
-            });
-        } else {
-            rootView.getViewTreeObserver()
-                    .addOnGlobalLayoutListener(
-                            new ViewTreeObserver.OnGlobalLayoutListener() {
-                                @Override
-                                public void onGlobalLayout() {
-                                    //hacky way of getting window insets on pre-Lollipop
-                                    int[] screenSize = Util.getScreenSize(ItemActivity.this);
-
-                                    int[] windowInsets = new int[]{
-                                            Math.abs(screenSize[0] - rootView.getLeft()),
-                                            Math.abs(screenSize[1] - rootView.getTop()),
-                                            Math.abs(screenSize[2] - rootView.getRight()),
-                                            Math.abs(screenSize[3] - rootView.getBottom())};
-
-                                    toolbar.setPadding(toolbar.getPaddingStart() + windowInsets[0],
-                                            toolbar.getPaddingTop() + windowInsets[1],
-                                            toolbar.getPaddingEnd() + windowInsets[2],
-                                            toolbar.getPaddingBottom());
-
-                                    bottomBar.setPadding(bottomBar.getPaddingStart() + windowInsets[0],
-                                            bottomBar.getPaddingTop(),
-                                            bottomBar.getPaddingEnd() + windowInsets[2],
-                                            bottomBar.getPaddingBottom() + windowInsets[3]);
-
-                                    rootView.getViewTreeObserver()
-                                            .removeOnGlobalLayoutListener(this);
-                                }
-                            });
-        }
+                // clear this listener so insets aren't re-applied
+                rootView.setOnApplyWindowInsetsListener(null);
+                return insets.consumeSystemWindowInsets();
+            }
+        });
 
         //needed to achieve transparent navBar
         setSystemUiFlags();

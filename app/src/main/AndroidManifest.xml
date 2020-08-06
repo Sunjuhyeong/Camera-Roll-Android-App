@@ -16,6 +16,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/CameraRoll.Theme">
+        <activity android:name=".ui.SearchResultActivity"></activity>
         <activity android:name=".ui.SearchActivity" />
         <activity android:name=".ui.PersonGroupActivity" />
         <activity
@@ -163,7 +164,7 @@
             android:name=".data.fileOperations.Rename"
             tools:ignore="InnerclassSeparator" />
 
-        <activity android:name=".ui.ShowDBActivity"/>
+        <activity android:name=".ui.ShowDBActivity" />
     </application>
 
 </manifest>
