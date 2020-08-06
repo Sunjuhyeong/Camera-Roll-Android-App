@@ -5,8 +5,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.graphics.drawable.AnimatedVectorDrawable;
 import android.graphics.drawable.Drawable;
+import android.media.ExifInterface;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
@@ -26,9 +28,6 @@ import androidx.core.app.ActivityOptionsCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.drawable.DrawableCompat;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.request.target.SimpleTarget;
-import com.bumptech.glide.request.transition.Transition;
 import com.microsoft.projectoxford.face.FaceServiceClient;
 import com.microsoft.projectoxford.face.FaceServiceRestClient;
 import com.microsoft.projectoxford.face.contract.FaceRectangle;
@@ -44,7 +43,6 @@ import java.util.Objects;
 import us.koller.cameraroll.R;
 import us.koller.cameraroll.adapter.SearchAdapter;
 import us.koller.cameraroll.data.models.Album;
-import us.koller.cameraroll.data.models.AlbumItem;
 import us.koller.cameraroll.room.ImageDB;
 import us.koller.cameraroll.room.ImageData;
 
@@ -55,6 +53,7 @@ public class SearchActivity extends ThemeableActivity {
     private FaceServiceClient faceServiceClient;
     private SearchAdapter adapter;
     private GridView gv;
+    private ArrayList<Bitmap> thumbnails = new ArrayList<>();
     ArrayList<String> checkId = new ArrayList<>();
     private String searchResult;
     private List<ImageData> imageDataListDescribe;
@@ -108,10 +107,9 @@ public class SearchActivity extends ThemeableActivity {
 
 
         mPersonGroupId = getIntent().getStringExtra("mPersonGroupID");
-        adapter = new SearchAdapter();
         gv = findViewById(R.id.faceGridView);
 
-//        new getPersonListTask().execute();
+        new getPersonListTask().execute();
     }
 
     @Override
@@ -191,14 +189,16 @@ public class SearchActivity extends ThemeableActivity {
             if (personList == null) {
                 return;
             }
-            for (Person person : personList) {
+//            for (Person person : personList) {
+            for (int i = 0; i<2; i++) {
                 try {
-                    Bitmap thumbnail = getFaceThumbnail(person);
-                    adapter.addItem(thumbnail);
+                    Bitmap thumbnail = getFaceThumbnail(personList[i]);
+                    thumbnails.add(thumbnail);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
+            adapter = new SearchAdapter(SearchActivity.this, thumbnails);
             gv.setAdapter(adapter);
             gv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override
@@ -239,8 +239,6 @@ public class SearchActivity extends ThemeableActivity {
         String path = null;
         String personImageID = null;
 
-        //todo: get faceRect & image path From DB
-        // by personID
         //DB 생성
         ImageDB db = ImageDB.getDatabase(this);
         List<ImageData> personImageList = db.imageDataDao().findByPersonID(personID);
@@ -253,24 +251,47 @@ public class SearchActivity extends ThemeableActivity {
         faceRectangle.left = Integer.parseInt(db.imageDataDao().findFaceRectangle(personImageID, "Face_mFace_left").getDataString());
         faceRectangle.width = Integer.parseInt(db.imageDataDao().findFaceRectangle(personImageID, "Face_mFace_width").getDataString());
 
-        bitmap = getBitmapFromPath(path);
+        bitmap = getPicture(path);
+
         return ImageHelper.generateFaceThumbnail(bitmap, faceRectangle);
     }
 
-    private Bitmap getBitmapFromPath(String path){
-        final Bitmap[] bitmap = new Bitmap[1];
+    private Bitmap getPicture(String currentPhotoPath) {
+        Bitmap bitmap = BitmapFactory.decodeFile(currentPhotoPath);
 
-        Glide.with(getApplicationContext())
-                .asBitmap()
-                .load(path)
-                .into(new SimpleTarget<Bitmap>() {
-                    @Override
-                    public void onResourceReady(Bitmap resource, Transition<? super Bitmap> transition) {
-                        bitmap[0] = resource;
-                    }
-                });
+        ExifInterface exif = null;
+        try { exif = new ExifInterface(currentPhotoPath);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        int exifOrientation;
+        int exifDegree;
+        if (exif != null) {
+            exifOrientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
+            exifDegree = exifOrientationToDegrees(exifOrientation);
+        } else {
+            exifDegree = 0;
+        }
 
-        return bitmap[0];
+        return rotate(bitmap, exifDegree);
+    }
+
+    private int exifOrientationToDegrees(int exifOrientation) {
+        if (exifOrientation == ExifInterface.ORIENTATION_ROTATE_90) {
+            return 90;
+        } else if (exifOrientation == ExifInterface.ORIENTATION_ROTATE_180) {
+            return 180;
+        } else if (exifOrientation == ExifInterface.ORIENTATION_ROTATE_270) {
+            return 270;
+        } return 0;
+    }
+
+    private Bitmap rotate(Bitmap src, float degree) {
+        // Matrix 객체 생성
+        Matrix matrix = new Matrix();
+        // 회전 각도 셋팅
+        matrix.postRotate(degree); // 이미지와 Matrix 를 셋팅해서 Bitmap 객체 생성
+        return Bitmap.createBitmap(src, 0, 0, src.getWidth(), src.getHeight(), matrix, true);
     }
 
     private void startAlbumActivity(Album album, int code) {
@@ -292,16 +313,14 @@ public class SearchActivity extends ThemeableActivity {
             if (resultCode != RESULT_CANCELED) {
                 setResult(RESULT_OK, data);
             }
-            if(file.delete())
-                this.finish();
-            else
+            file.delete();
+
                 Log.d("MyTag", "wrong file deleted in searchActivity");
         } else if(requestCode == VisionAlbumCode){
             if (resultCode != RESULT_CANCELED) {
                 setResult(RESULT_OK, data);
             }
-            if(file.delete())
-                this.finish();
+            file.delete();
         }
     }
 

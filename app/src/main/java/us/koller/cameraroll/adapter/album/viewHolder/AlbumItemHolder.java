@@ -9,6 +9,7 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.core.content.ContextCompat;
@@ -163,9 +164,10 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
                 .apply(albumItem.getGlideRequestOptions(imageView.getContext()))
                 .into(new SimpleTarget<Bitmap>() {
                     @Override
-                    public void onResourceReady(Bitmap resource, Transition<? super Bitmap> transition) {
+                    public void onResourceReady(@NonNull Bitmap resource, Transition<? super Bitmap> transition) {
                         imageView.setImageBitmap(resource);
                         mBitmap = resource.copy(resource.getConfig(), false);
+
                         boolean canDescribe = true;
                         boolean canOCR = true;
                         boolean canFace = true;
@@ -342,11 +344,6 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
 
             try {
                 Person[] result = faceServiceClient.listPersonsInLargePersonGroup(mPersonGroupId);
-                if (result == null)
-                {
-//                    new AddPersonTask(this.imageName, this.folderName, mBitmap, mFace).execute(mPersonGroupId);
-                    return null;
-                }
                 return result;
             } catch (Exception e) {
                 publishProgress("get PersonList failed");
@@ -357,6 +354,7 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
         @Override
         protected void onPostExecute(Person[] personList) {
             if (personList == null) {
+                new AddPersonTask(this.imageName, this.folderName, mBitmap, mFace).execute(mPersonGroupId);
                 return;
             }
             for (Person person : personList) {
@@ -402,10 +400,11 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
         protected void onPostExecute(VerifyResult result) {
             if (result != null) {
                 if (result.isIdentical){
-                    new AddFaceTask(this.imageName, this.folderName, mPersonId, mPersonGroupId, mBitmap, mFace).execute();
                     isMatched.put(mFace, true);
+                    new AddFaceTask(this.imageName, this.folderName, mPersonId, mPersonGroupId, mBitmap, mFace).execute();
+                } else{
+                    new AddPersonTask(this.imageName, this.folderName, mBitmap, mFace).execute(mPersonGroupId);
                 }
-                new AddPersonTask(this.imageName, this.folderName, mBitmap, mFace).execute(mPersonGroupId);
             }
         }
     }
@@ -431,7 +430,7 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
                     // Start the request to creating person.
                     CreatePersonResult createPersonResult = faceServiceClient.createPersonInLargePersonGroup(
                             params[0],
-                            "unknown" + mFace.faceId,
+                            "unknown" + imageName,
                             "user data");
 
                     return createPersonResult.personId;
