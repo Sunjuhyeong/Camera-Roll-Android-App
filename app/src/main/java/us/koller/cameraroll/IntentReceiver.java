@@ -5,6 +5,8 @@ import android.net.Uri;
 import android.os.Bundle;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+
+import android.os.Parcelable;
 import android.widget.Toast;
 
 import us.koller.cameraroll.data.models.AlbumItem;
@@ -76,7 +78,7 @@ public class IntentReceiver extends AppCompatActivity {
                     .setData(uri)
                     .putExtra(ItemActivity.ALBUM_ITEM, albumItem)
                     .putExtra(ItemActivity.VIEW_ONLY, true)
-                    .putExtra(ItemActivity.ALBUM, album)
+                    .putExtra(ItemActivity.ALBUM, (Parcelable) album)
                     .putExtra(ItemActivity.ITEM_POSITION, album.getAlbumItems().indexOf(albumItem))
                     .addFlags(intent.getFlags());
             startActivity(view_photo);

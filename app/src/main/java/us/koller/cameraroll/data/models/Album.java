@@ -4,6 +4,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 import java.io.File;
+import java.io.Serializable;
 import java.util.ArrayList;
 
 import us.koller.cameraroll.data.provider.MediaProvider;
@@ -11,7 +12,7 @@ import us.koller.cameraroll.data.provider.Provider;
 import us.koller.cameraroll.util.SortUtil;
 
 public class Album
-        implements Parcelable, SortUtil.Sortable {
+        implements Parcelable, SortUtil.Sortable, Serializable {
 
     private static final int NOT_HIDDEN = 1;
     private static final int HIDDEN = 2;
@@ -29,6 +30,10 @@ public class Album
         cached = false;
         excluded = false;
         pinned = false;
+    }
+
+    public void setAlbumItems(ArrayList<AlbumItem> albumItems) {
+        this.albumItems = albumItems;
     }
 
     public Album setPath(String path) {
