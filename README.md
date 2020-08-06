@@ -14,3 +14,17 @@ Simple Gallery App for Android, with lovely Material Design.<br>
       alt="Get it on F-Droid"
       height="80">](https://f-droid.org/app/us.koller.cameraroll)
 
+# Search pictures in a gallery
+ Add Search function in Gallery.
+ 
+ Searching by keyword, texts and person face is supported.
+ 
+ 
+# Search by keword
+ Microsoft Azure's Computer Vision API (describe) attaches relevant tags to each picture.
+ 
+# Search by text
+ Microsoft Azure's Computer Vision API (OCR) recognizes and saves the text in each picture.
+
+# Search by face
+ Microsoft Azure's Face API detect faces in each picture. Using the API, save each person to LargePersonGroup in the API's server, and verify new face in the personGroup.

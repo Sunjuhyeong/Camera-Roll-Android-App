@@ -52,8 +52,6 @@ public class SearchActivity extends ThemeableActivity {
     private GridView gv;
     private File file;
     private String searchResult;
-    private Menu menu;
-    MenuItem mSearch;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,6 +65,7 @@ public class SearchActivity extends ThemeableActivity {
         AnimatedVectorDrawable drawable = (AnimatedVectorDrawable)
                 ContextCompat.getDrawable(SearchActivity.this, R.drawable.back_to_cancel_avd);
         //mutating avd to reset it
+        assert drawable != null;
         drawable.mutate();
         toolbar.setNavigationIcon(drawable);
         Drawable navIcon = toolbar.getNavigationIcon();
@@ -127,10 +126,9 @@ public class SearchActivity extends ThemeableActivity {
 
         mPersonGroupId = getIntent().getStringExtra("mPersonGroupID");
         adapter = new SearchAdapter();
-        gv = (GridView)findViewById(R.id.faceGridView);
+        gv = findViewById(R.id.faceGridView);
 
 //        new getPersonListTask().execute();
-        return;
     }
 
     @Override
@@ -150,7 +148,6 @@ public class SearchActivity extends ThemeableActivity {
         //search_menu.xml 등록
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.search_menu, menu);
-        this.menu = menu;
 
         MenuItem mSearch = menu.findItem(R.id.search);
         mSearch.setVisible(true);
