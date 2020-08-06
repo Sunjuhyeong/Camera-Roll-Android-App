@@ -44,6 +44,7 @@ import java.util.Objects;
 import us.koller.cameraroll.R;
 import us.koller.cameraroll.adapter.SearchAdapter;
 import us.koller.cameraroll.data.models.Album;
+import us.koller.cameraroll.data.models.AlbumItem;
 import us.koller.cameraroll.room.ImageDB;
 import us.koller.cameraroll.room.ImageData;
 
