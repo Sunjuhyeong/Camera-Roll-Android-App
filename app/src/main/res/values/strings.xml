@@ -1,3 +1,5 @@
 <resources>
     <string name="searchTitle" translatable="false"> </string>
+    <string name="subscription_key_face" translatable="false"> </string>
+    <string name="subscription_key_vision" translatable="false"> </string>
 </resources>
