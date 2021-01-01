@@ -6,12 +6,9 @@ buildscript {
         google()
     }
     dependencies {
-<<<<<<< Updated upstream
-        classpath 'com.android.tools.build:gradle:3.1.4'
-=======
         classpath 'com.android.tools.build:gradle:4.1.1'
->>>>>>> Stashed changes
     }
+
 }
 
 allprojects {
@@ -19,5 +16,10 @@ allprojects {
         jcenter()
         maven { url "https://jitpack.io" }
         maven { url "https://maven.google.com" }
+        google()
     }
 }
+
+
+
+

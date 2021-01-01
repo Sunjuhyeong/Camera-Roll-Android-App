@@ -5,14 +5,14 @@ import android.graphics.PorterDuff;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.annotation.RequiresApi;
-import android.support.v7.app.ActionBar;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.Toolbar;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AlertDialog;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.appcompat.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -30,6 +30,7 @@ import us.koller.cameraroll.R;
 import us.koller.cameraroll.data.Settings;
 import us.koller.cameraroll.data.models.VirtualAlbum;
 import us.koller.cameraroll.data.provider.Provider;
+import us.koller.cameraroll.room.ImageDB;
 import us.koller.cameraroll.themes.Theme;
 import us.koller.cameraroll.util.Util;
 
@@ -41,6 +42,7 @@ public class VirtualAlbumsActivity extends ThemeableActivity {
     private RecyclerViewAdapter.OnVirtualAlbumChangedListener onVirtualAlbumChangedListener;
 
     private Menu menu;
+    private TextView textView;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {

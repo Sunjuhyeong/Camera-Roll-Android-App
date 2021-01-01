@@ -3,11 +3,11 @@ package us.koller.cameraroll.adapter.album;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.support.annotation.NonNull;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.ActivityOptionsCompat;
-import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.SimpleItemAnimator;
+import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
+import androidx.core.app.ActivityOptionsCompat;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.SimpleItemAnimator;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -39,13 +39,15 @@ public class AlbumAdapter extends AbstractRecyclerViewAdapter<Album> {
     private final int VIEW_TYPE_GIF = 2;
     private final int VIEW_TYPE_VIDEO = 3;
     private final int VIEW_TYPE_RAW = 4;
+    private String mPersonGroupId;
 
     private DragSelectTouchListener dragSelectTouchListener;
 
     public AlbumAdapter(SelectorModeManager.Callback callback, final RecyclerView recyclerView,
-                        final Album album, boolean pick_photos) {
+                        final Album album, boolean pick_photos, String PersonGroupId) {
         super(pick_photos);
 
+        mPersonGroupId = PersonGroupId;
         setData(album);
         setSelectorModeManager(new SelectorModeManager());
         if (callback != null) {
@@ -98,6 +100,7 @@ public class AlbumAdapter extends AbstractRecyclerViewAdapter<Album> {
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         return onCreateViewHolder(parent, viewType, R.layout.albumitem_cover);
+
     }
 
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType, int layoutRes) {
@@ -117,12 +120,13 @@ public class AlbumAdapter extends AbstractRecyclerViewAdapter<Album> {
         return null;
     }
 
+
     @Override
     public void onBindViewHolder(@NonNull final RecyclerView.ViewHolder holder, int position) {
         final AlbumItem albumItem = getData().getAlbumItems().get(position);
 
         if (!albumItem.equals(((AlbumItemHolder) holder).getAlbumItem())) {
-            ((AlbumItemHolder) holder).setAlbumItem(albumItem);
+            ((AlbumItemHolder) holder).setAlbumItem(albumItem, mPersonGroupId);
         }
 
         boolean selected = getSelectorManager().isItemSelected(albumItem.getPath());
@@ -251,6 +255,10 @@ public class AlbumAdapter extends AbstractRecyclerViewAdapter<Album> {
 
     private void setSelectorMode(boolean activate) {
         getSelectorManager().setSelectorMode(activate);
+    }
+
+    public void setPersonGroupId(String PersonGroupId){
+        mPersonGroupId = PersonGroupId;
     }
 
     public boolean dragSelectEnabled() {
