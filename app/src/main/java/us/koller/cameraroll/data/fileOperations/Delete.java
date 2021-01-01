@@ -3,7 +3,7 @@ package us.koller.cameraroll.data.fileOperations;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
-import android.support.v4.provider.DocumentFile;
+import androidx.documentfile.provider.DocumentFile;
 
 import java.io.File;
 
@@ -43,7 +43,7 @@ public class Delete extends FileOperation {
                 result = deleteFileOnRemovableStorage(getApplicationContext(), treeUri, files[i].getPath());
             } else {
                 result = deleteFile(files[i].getPath());
-                //Delete Album, when empty
+                //DeleteAlbum, when empty
                 /*String parentPath = Util.getParentPath(files[i].getPath());
                 if (result && Util.isDirectoryEmpty(parentPath)) {
                     deleteFile(parentPath);

@@ -12,18 +12,18 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.MediaStore;
-import android.support.annotation.RequiresApi;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
-import android.support.v4.app.ActivityOptionsCompat;
-import android.support.v4.app.SharedElementCallback;
-import android.support.v4.content.ContextCompat;
-import android.support.v4.graphics.drawable.DrawableCompat;
-import android.support.v7.app.ActionBar;
-import android.support.v7.widget.GridLayoutManager;
-import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.SimpleItemAnimator;
-import android.support.v7.widget.Toolbar;
+import androidx.annotation.RequiresApi;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.snackbar.Snackbar;
+import androidx.core.app.ActivityOptionsCompat;
+import androidx.core.app.SharedElementCallback;
+import androidx.core.content.ContextCompat;
+import androidx.core.graphics.drawable.DrawableCompat;
+import androidx.appcompat.app.ActionBar;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.SimpleItemAnimator;
+import androidx.appcompat.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -64,11 +64,13 @@ public class MainActivity extends ThemeableActivity {
     public static final String PICK_PHOTOS = "PICK_PHOTOS";
     public static final String RESORT = "RESORT";
 
+    public static final int PersonGroupCode = 13;
     public static final int PICK_PHOTOS_REQUEST_CODE = 6;
     public static final int REFRESH_PHOTOS_REQUEST_CODE = 7;
     public static final int REMOVABLE_STORAGE_PERMISSION_REQUEST_CODE = 8;
     public static final int SETTINGS_REQUEST_CODE = 9;
 
+    private String mPersonGroupId;
     //needed for sharedElement-Transition in Nested RecyclerView Style
     private NestedRecyclerViewAlbumHolder sharedElementViewHolder;
     private final SharedElementCallback mCallback
@@ -600,6 +602,10 @@ public class MainActivity extends ThemeableActivity {
                 startActivity(new Intent(this, FileExplorerActivity.class),
                         ActivityOptionsCompat.makeSceneTransitionAnimation(this).toBundle());
                 break;
+            case R.id.showDB:
+                startActivity(new Intent(this, ShowDBActivity.class),
+                        ActivityOptionsCompat.makeSceneTransitionAnimation(this).toBundle());
+                break;
             case R.id.settings:
                 startActivityForResult(new Intent(this, SettingsActivity.class),
                         SETTINGS_REQUEST_CODE);
@@ -698,6 +704,8 @@ public class MainActivity extends ThemeableActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         switch (requestCode) {
+            case PersonGroupCode:
+                mPersonGroupId = data.getStringExtra("result");
             case PICK_PHOTOS_REQUEST_CODE:
                 if (resultCode != RESULT_CANCELED) {
                     setResult(RESULT_OK, data);

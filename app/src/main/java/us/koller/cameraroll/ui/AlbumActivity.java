@@ -19,18 +19,21 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.annotation.Nullable;
-import android.support.annotation.RequiresApi;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
-import android.support.v4.app.SharedElementCallback;
-import android.support.v4.content.ContextCompat;
-import android.support.v4.graphics.drawable.DrawableCompat;
-import android.support.v7.app.ActionBar;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.widget.GridLayoutManager;
-import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.Toolbar;
+import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.snackbar.Snackbar;
+import androidx.core.app.ActivityCompat;
+import androidx.core.app.SharedElementCallback;
+import androidx.core.content.ContextCompat;
+import androidx.core.graphics.drawable.DrawableCompat;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AlertDialog;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.appcompat.widget.Toolbar;
+
+import android.os.Parcelable;
 import android.transition.Fade;
 import android.transition.Slide;
 import android.transition.TransitionSet;
@@ -44,32 +47,33 @@ import android.view.ViewTreeObserver;
 import android.view.WindowInsets;
 import android.view.animation.AccelerateDecelerateInterpolator;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import us.koller.cameraroll.R;
-import us.koller.cameraroll.data.fileOperations.Move;
-import us.koller.cameraroll.data.models.VirtualAlbum;
-import us.koller.cameraroll.themes.Theme;
 import us.koller.cameraroll.adapter.SelectorModeManager;
 import us.koller.cameraroll.adapter.album.AlbumAdapter;
+import us.koller.cameraroll.data.Settings;
+import us.koller.cameraroll.data.fileOperations.FileOperation;
+import us.koller.cameraroll.data.fileOperations.Move;
+import us.koller.cameraroll.data.fileOperations.Rename;
 import us.koller.cameraroll.data.models.Album;
 import us.koller.cameraroll.data.models.AlbumItem;
-import us.koller.cameraroll.data.fileOperations.FileOperation;
-import us.koller.cameraroll.data.fileOperations.Rename;
 import us.koller.cameraroll.data.models.File_POJO;
+import us.koller.cameraroll.data.models.VirtualAlbum;
 import us.koller.cameraroll.data.provider.MediaProvider;
 import us.koller.cameraroll.data.provider.Provider;
-import us.koller.cameraroll.data.Settings;
+import us.koller.cameraroll.themes.Theme;
 import us.koller.cameraroll.ui.widget.FastScrollerRecyclerView;
 import us.koller.cameraroll.ui.widget.GridMarginDecoration;
 import us.koller.cameraroll.ui.widget.SwipeBackCoordinatorLayout;
+import us.koller.cameraroll.util.MediaType;
 import us.koller.cameraroll.util.SortUtil;
 import us.koller.cameraroll.util.StorageUtil;
-import us.koller.cameraroll.util.animators.ColorFade;
-import us.koller.cameraroll.util.MediaType;
 import us.koller.cameraroll.util.Util;
+import us.koller.cameraroll.util.animators.ColorFade;
 
 public class AlbumActivity extends ThemeableActivity
         implements SwipeBackCoordinatorLayout.OnSwipeListener, SelectorModeManager.Callback {
@@ -129,10 +133,22 @@ public class AlbumActivity extends ThemeableActivity
     private boolean pick_photos;
     private boolean allowMultiple;
 
+
+    private String mPersonGroupId;
+    private int PersonGroupCode = 13;
+    private int SearchCode = 26;
+    private String from;
+    private Album albumFromSearch;
     @Override
     protected void onCreate(@Nullable final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_album);
+        Intent visionAlbumIntent = getIntent();
+        albumFromSearch = (Album) visionAlbumIntent.getSerializableExtra("albumFromSearch");
+        from = visionAlbumIntent.getStringExtra("from");
+
+        Intent intent = new Intent(getApplicationContext() , PersonGroupActivity.class);
+        ActivityCompat.startActivityForResult(this, intent, PersonGroupCode, null);
 
         pick_photos = getIntent().getAction() != null
                 && getIntent().getAction().equals(MainActivity.PICK_PHOTOS);
@@ -141,18 +157,16 @@ public class AlbumActivity extends ThemeableActivity
         MediaProvider.checkPermission(this);
 
         setExitSharedElementCallback(mCallback);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            getWindow().setEnterTransition(new TransitionSet()
-                    .setOrdering(TransitionSet.ORDERING_TOGETHER)
-                    .addTransition(new Slide(Gravity.BOTTOM))
-                    .addTransition(new Fade())
-                    .setInterpolator(new AccelerateDecelerateInterpolator()));
-            getWindow().setReturnTransition(new TransitionSet()
-                    .setOrdering(TransitionSet.ORDERING_TOGETHER)
-                    .addTransition(new Slide(Gravity.BOTTOM))
-                    .addTransition(new Fade())
-                    .setInterpolator(new AccelerateDecelerateInterpolator()));
-        }
+        getWindow().setEnterTransition(new TransitionSet()
+                .setOrdering(TransitionSet.ORDERING_TOGETHER)
+                .addTransition(new Slide(Gravity.BOTTOM))
+                .addTransition(new Fade())
+                .setInterpolator(new AccelerateDecelerateInterpolator()));
+        getWindow().setReturnTransition(new TransitionSet()
+                .setOrdering(TransitionSet.ORDERING_TOGETHER)
+                .addTransition(new Slide(Gravity.BOTTOM))
+                .addTransition(new Fade())
+                .setInterpolator(new AccelerateDecelerateInterpolator()));
 
         final ViewGroup swipeBackView = findViewById(R.id.swipeBackView);
         if (swipeBackView instanceof SwipeBackCoordinatorLayout) {
@@ -163,15 +177,11 @@ public class AlbumActivity extends ThemeableActivity
         setSupportActionBar(toolbar);
         final ActionBar actionBar = getSupportActionBar();
         if (!pick_photos) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                AnimatedVectorDrawable drawable = (AnimatedVectorDrawable)
-                        ContextCompat.getDrawable(AlbumActivity.this, R.drawable.back_to_cancel_avd);
-                //mutating avd to reset it
-                drawable.mutate();
-                toolbar.setNavigationIcon(drawable);
-            } else {
-                toolbar.setNavigationIcon(R.drawable.ic_arrow_back_white);
-            }
+            AnimatedVectorDrawable drawable = (AnimatedVectorDrawable)
+                    ContextCompat.getDrawable(AlbumActivity.this, R.drawable.back_to_cancel_avd);
+            //mutating avd to reset it
+            drawable.mutate();
+            toolbar.setNavigationIcon(drawable);
             Drawable navIcon = toolbar.getNavigationIcon();
             if (navIcon != null) {
                 navIcon = DrawableCompat.wrap(navIcon);
@@ -205,11 +215,12 @@ public class AlbumActivity extends ThemeableActivity
             }
         });
 
+        //Init PersonGroup
         recyclerView = findViewById(R.id.recyclerView);
         final int columnCount = Settings.getInstance(this).getColumnCount(this);
         GridLayoutManager gridLayoutManager = new GridLayoutManager(this, columnCount);
         recyclerView.setLayoutManager(gridLayoutManager);
-        recyclerViewAdapter = new AlbumAdapter(this, recyclerView, album, pick_photos);
+        recyclerViewAdapter = new AlbumAdapter(this, recyclerView, album, pick_photos, mPersonGroupId);
         recyclerView.setAdapter(recyclerViewAdapter);
         float albumGridSpacing = getResources().getDimension(R.dimen.album_grid_spacing);
         ((FastScrollerRecyclerView) recyclerView).addOuterGridSpacing((int) (albumGridSpacing / 2));
@@ -363,14 +374,44 @@ public class AlbumActivity extends ThemeableActivity
         } else {
             path = getIntent().getStringExtra(ALBUM_PATH);
         }
-        MediaProvider.loadAlbum(this, path,
-                new MediaProvider.OnAlbumLoadedCallback() {
-                    @Override
-                    public void onAlbumLoaded(Album album) {
-                        AlbumActivity.this.album = album;
-                        AlbumActivity.this.onAlbumLoaded(savedInstanceState);
-                    }
-                });
+        if(from == null) {
+            MediaProvider.loadAlbum(this, path,
+                    new MediaProvider.OnAlbumLoadedCallback() {
+                        @Override
+                        public void onAlbumLoaded(Album album) {
+                            AlbumActivity.this.album = album;
+                            AlbumActivity.this.onAlbumLoaded(savedInstanceState);
+                        }
+                    });
+        } else{
+            Activity activity = AlbumActivity.this;
+            new MediaProvider(activity).loadAlbums(activity, false,
+                    new MediaProvider.OnMediaLoadedCallback() {
+                        @Override
+                        public void onMediaLoaded(ArrayList<Album> albums) {
+                            //reload activity
+                            MediaProvider.loadAlbum(activity, path,
+                                    new MediaProvider.OnAlbumLoadedCallback() {
+                                        @Override
+                                        public void onAlbumLoaded(Album album) {
+                                            AlbumActivity.this.album = album;
+                                            AlbumActivity.this.onAlbumLoaded(null);
+                                        }
+                                    });
+                        }
+
+                        @Override
+                        public void timeout() {
+                            finish();
+                        }
+
+                        @Override
+                        public void needPermission() {
+                            finish();
+                        }
+                    });
+
+        }
 
     }
 
@@ -598,6 +639,7 @@ public class AlbumActivity extends ThemeableActivity
                 }).show();
                 break;
             case R.id.sort_by_date:
+
             case R.id.sort_by_name:
                 item.setChecked(true);
 
@@ -609,6 +651,15 @@ public class AlbumActivity extends ThemeableActivity
 
                 recyclerViewAdapter.notifyDataSetChanged();
                 break;
+
+            case R.id.search:
+                Intent intentS = new Intent(this, SearchActivity.class);
+                intentS.putExtra(ALBUM_PATH, album.getPath());
+                intentS.putExtra("mPersonGroupID", mPersonGroupId );
+                intentS.putExtra("album", (Serializable) album);
+                startActivityForResult(intentS, SearchCode);
+                break;
+
             default:
                 break;
         }
@@ -618,12 +669,19 @@ public class AlbumActivity extends ThemeableActivity
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        switch (resultCode) {
-            default:
-                if (data != null && data.getAction() != null) {
-                    onNewIntent(data);
-                }
-                break;
+        if (requestCode == PersonGroupCode) {
+            if (resultCode == RESULT_OK){
+                mPersonGroupId = data.getStringExtra("result");
+                recyclerViewAdapter.setPersonGroupId(mPersonGroupId);
+            }
+        }
+        else if (requestCode == SearchCode){
+            //todo: implementation
+        }
+        else{ //default
+            if (data != null && data.getAction() != null) {
+                onNewIntent(data);
+            }
         }
     }
 
